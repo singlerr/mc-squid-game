@@ -1,0 +1,9 @@
+[versions]
+paperweight = "1.7.7"
+lombok = "8.10"
+papermake = "1.0.6"
+
+[plugins]
+paperweight-userdev = { id = "io.papermc.paperweight.userdev", version.ref = "paperweight" }
+lombok = { id = "io.freefair.lombok", version.ref = "lombok" }
+papermake = { id = "com.rikonardo.papermake", version.ref = "papermake" }

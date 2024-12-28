@@ -1,0 +1,7 @@
+name: ${name}
+version: ${version}
+main: io.github.singlerr.sg.core.GameCore
+api-version: '1.20'
+authors: [ ${ author } ]
+commands:
+  sg:
