@@ -45,7 +45,9 @@ public final class GameSetupManager {
     }
 
     GameSetupContext<? extends GameSettings> context = game.getGameSetup().createContext();
+    this.contexts.put(playerId, new GameSetup(game, context));
     game.getGameSetup().setupStart((GameSetupContext<GameSettings>) context);
+
     return true;
   }
 

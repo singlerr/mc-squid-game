@@ -190,8 +190,8 @@ public final class GameCommands implements CommandExecutor, TabCompleter {
 
   private String[] slice(String[] args, int startIndex) {
     String[] slice = new String[args.length - startIndex];
-    if (args.length - startIndex >= 0) {
-      System.arraycopy(args, startIndex, slice, startIndex, args.length - startIndex);
+    for (int i = startIndex, destIdx = 0; i < args.length; i++, destIdx++) {
+      slice[destIdx] = args[i];
     }
 
     return slice;

@@ -7,4 +7,5 @@ public class RLGLGameSetupContext extends GameSetupContext<RLGLGameSettings> {
   public RLGLGameSetupContext(RLGLGameSettings settings) {
     super(settings);
   }
+
 }

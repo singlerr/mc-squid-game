@@ -1,6 +1,6 @@
 name: ${name}
 version: ${version}
-main: io.github.singlerr.sg.core.GameCore
+main: io.github.singlerr.sg.rlgl.RedLightGreenLight
 api-version: '1.20'
 authors: [ ${ author } ]
 depends: [ squid-game-core ]

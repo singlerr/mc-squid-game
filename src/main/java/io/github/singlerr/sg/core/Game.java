@@ -18,8 +18,9 @@ public interface Game {
 
   <T extends GameSettings> GameSetup<T> getGameSetup();
 
-  default GameContext createContext(GameContext prev, GameEventBus eventBus, GameStatus status) {
-    return new GameContext(prev.getPlayers(), status, eventBus, null);
+  default GameContext createContext(GameContext prev, GameEventBus eventBus, GameStatus status,
+                                    GameSettings settings) {
+    return new GameContext(prev.getPlayers(), status, eventBus, settings);
   }
 
 }

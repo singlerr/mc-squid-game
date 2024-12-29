@@ -7,6 +7,7 @@ import io.github.singlerr.sg.core.context.impl.DefaultGameEventBus;
 import io.github.singlerr.sg.core.events.GameEventListener;
 import io.github.singlerr.sg.core.registry.Registry;
 import io.github.singlerr.sg.core.registry.impl.RegistryFactory;
+import io.github.singlerr.sg.core.setup.GameSettings;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -76,10 +77,12 @@ public final class GameLifecycle extends BukkitRunnable {
           initRegistry("minecraft_events", game::registerListener);
       registerEvents(minecraftListeners.values(), plugin);
       GameEventBus eventBus = createEventBus(gameListeners);
-      GameContext context = game.createContext(prevGameContext, eventBus, GameStatus.START);
+      GameSettings settings = game.getGameSetup().getSettings(gameSettings.getById(id));
+      GameContext context =
+          game.createContext(prevGameContext, eventBus, GameStatus.START, settings);
       if (context == null) {
         context = new GameContext(new ArrayList<>(), GameStatus.START, eventBus,
-            game.getGameSetup().getSettings(gameSettings.getById(id)));
+            settings);
       }
       currentGame = new GameInfo(id, game, context, eventBus, minecraftListeners);
       eventBus.postGameStart(context);
