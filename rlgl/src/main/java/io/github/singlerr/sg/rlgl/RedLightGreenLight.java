@@ -3,8 +3,6 @@ package io.github.singlerr.sg.rlgl;
 import io.github.singlerr.sg.core.GameRegistry;
 import io.github.singlerr.sg.core.network.NetworkRegistry;
 import io.github.singlerr.sg.rlgl.game.RLGLGame;
-import io.github.singlerr.sg.rlgl.network.PacketAnimateTransformation;
-import io.github.singlerr.sg.rlgl.network.PacketTransformModel;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -21,7 +19,6 @@ public final class RedLightGreenLight extends JavaPlugin {
     }
 
     registry.getProvider().register("rlgl", new RLGLGame());
-    registerPackets(networkRegistry.getProvider());
   }
 
   @Override
@@ -30,7 +27,5 @@ public final class RedLightGreenLight extends JavaPlugin {
   }
 
   private void registerPackets(NetworkRegistry registry) {
-    registry.register(PacketAnimateTransformation.ID, PacketAnimateTransformation.class);
-    registry.register(PacketTransformModel.ID, PacketTransformModel.class);
   }
 }

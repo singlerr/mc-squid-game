@@ -34,13 +34,15 @@ public final class GameStorage {
     YamlConfiguration config = YamlConfiguration.loadConfiguration(file);
 
     if (!config.contains("games")) {
-      throw new IllegalStateException(
-          "Malformed YAML! A config must contain one 'games' key to denote list of game settings");
+      log.warn(
+          "Malformed YAML! A config must contain one 'games' key to denote list of game settings. Copying defaults...");
+      return (loadedSettings = copyDefaults());
     }
 
     ConfigurationSection gameSection = config.getConfigurationSection("games");
     if (gameSection == null) {
-      throw new IllegalStateException("Malformed YAML! A node 'games' must be a section");
+      log.warn("Malformed YAML! A node 'games' must be a section. Copying defaults...");
+      return (loadedSettings = copyDefaults());
     }
 
     GameSettingsRegistry registry = DefaultGameSettingsRegistry.create();
@@ -65,6 +67,16 @@ public final class GameStorage {
 
     this.loadedSettings = registry;
     return registry;
+  }
+
+  public void save() throws IOException {
+    YamlConfiguration config = new YamlConfiguration();
+    for (String key : loadedSettings.keys()) {
+      config.set("games." + key, loadedSettings.getById(key));
+      log.info("Writing config of {} to config file", key);
+    }
+
+    config.save(file);
   }
 
   public GameSettingsRegistry copyDefaults() throws IOException {

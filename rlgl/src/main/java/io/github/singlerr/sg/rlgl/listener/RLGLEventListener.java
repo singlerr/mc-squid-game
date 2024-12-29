@@ -54,6 +54,7 @@ public final class RLGLEventListener extends InteractableListener {
       String msg = MessageFormatter.basicArrayFormat("플레이어 움직임 감지: {}",
           game.getGameContext().getKillTargets().stream()
               .map(i -> Bukkit.getPlayer(i).getDisplayName()).toArray());
+      player.getPlayer().setGlowing(true);
       for (GamePlayer gamePlayer : game.getGameContext().getPlayers()) {
         if (gamePlayer.getRole() == GameRole.ADMIN) {
           gamePlayer.getPlayer()

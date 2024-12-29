@@ -19,13 +19,25 @@ public enum RLGLItemRole {
   END(Component.literal("[게임 종료]").withStyle(ChatFormatting.YELLOW), (ctx, player) -> {
     ctx.end();
   }),
-  RED_LIGHT(Component.literal("[빨간 불]").withStyle(ChatFormatting.RED),
+  GREEN_LIGHT_1(Component.literal("[빨간불 - 2s]").withStyle(ChatFormatting.RED),
       (ctx, player) -> {
-        ctx.redLight();
+        ctx.greenLight(ctx.getGameSettings().getSoundOne());
       }),
-  GREEN_LIGHT(Component.literal("[파란 불]").withStyle(ChatFormatting.BLUE),
+  GREEN_LIGHT_2(Component.literal("[빨간불 - 3s]").withStyle(ChatFormatting.RED),
       (ctx, player) -> {
-        ctx.greenLight();
+        ctx.greenLight(ctx.getGameSettings().getSoundTwo());
+      }),
+  GREEN_LIGHT_3(Component.literal("[빨간불 - 4s]").withStyle(ChatFormatting.RED),
+      (ctx, player) -> {
+        ctx.greenLight(ctx.getGameSettings().getSoundThree());
+      }),
+  GREEN_LIGHT_4(Component.literal("[빨간불 - 5s]").withStyle(ChatFormatting.RED),
+      (ctx, player) -> {
+        ctx.greenLight(ctx.getGameSettings().getSoundFour());
+      }),
+  GREEN_LIGHT_5(Component.literal("[빨간불 - 8s]").withStyle(ChatFormatting.RED),
+      (ctx, player) -> {
+        ctx.greenLight(ctx.getGameSettings().getSoundFive());
       });
 
   private static final NamespacedKey KEY = new NamespacedKey("rlgl", "role");
@@ -53,6 +65,7 @@ public enum RLGLItemRole {
   public ItemStack ofRole(ItemStack stack) {
     ItemMeta itemMeta = stack.getItemMeta();
     itemMeta.getCustomTagContainer().setCustomTag(KEY, ItemTagType.STRING, toString());
+    itemMeta.setDisplayName(displayName.getString());
     stack.setItemMeta(itemMeta);
 
     return stack;

@@ -3,6 +3,8 @@ package io.github.singlerr.sg.core;
 import io.github.singlerr.sg.core.commands.GameCommands;
 import io.github.singlerr.sg.core.network.NetworkRegistry;
 import io.github.singlerr.sg.core.network.impl.PluginAwareNetworkRegistry;
+import io.github.singlerr.sg.core.network.packets.PacketAnimateTransformation;
+import io.github.singlerr.sg.core.network.packets.PacketTransformModel;
 import io.github.singlerr.sg.core.registry.Registry;
 import io.github.singlerr.sg.core.registry.impl.DefaultGameRegistry;
 import io.github.singlerr.sg.core.registry.impl.RegistryFactory;
@@ -36,11 +38,22 @@ public final class GameCore extends JavaPlugin {
     loadSettings();
     this.setupManager = new GameSetupManager(gameRegistry);
     setup(gameRegistry);
+    log.info("Loaded following games: {}", gameRegistry.keys());
     this.coreLifecycle =
         new GameLifecycle(gameRegistry, settingsStorage.getLoadedSettings(), instance);
     this.coreLifecycle.runTaskTimerAsynchronously(instance, 0L, 1L);
+    registerPackets(networkRegistry);
     ((PluginAwareNetworkRegistry) networkRegistry).registerToMessengers();
     registerCommands();
+  }
+
+  @Override
+  public void onDisable() {
+    try {
+      settingsStorage.save();
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @Override
@@ -51,6 +64,11 @@ public final class GameCore extends JavaPlugin {
         ServicePriority.Highest);
     Bukkit.getServicesManager()
         .register(NetworkRegistry.class, networkRegistry, instance, ServicePriority.Highest);
+  }
+
+  private void registerPackets(NetworkRegistry registry) {
+    registry.register(PacketAnimateTransformation.ID, PacketAnimateTransformation.class);
+    registry.register(PacketTransformModel.ID, PacketTransformModel.class);
   }
 
   private void registerCommands() {
