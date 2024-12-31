@@ -2,13 +2,12 @@ package io.github.singlerr.sg.core.network;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
-import com.google.common.io.ByteArrayDataInput;
-import com.google.common.io.ByteArrayDataOutput;
-import com.google.common.io.ByteStreams;
-import java.lang.reflect.InvocationTargetException;
+import io.netty.buffer.Unpooled;
 import java.util.Set;
 import java.util.function.Consumer;
 import lombok.extern.slf4j.Slf4j;
+import net.minecraft.network.FriendlyByteBuf;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.messaging.PluginMessageListener;
@@ -17,7 +16,7 @@ import org.bukkit.plugin.messaging.PluginMessageListener;
 public final class PacketChannel implements PluginMessageListener {
 
   private final Plugin plugin;
-  private final BiMap<String, Class<? extends Packet>> packetMapper;
+  private final BiMap<String, PacketRegistry<? extends Packet>> packetMapper;
 
   public PacketChannel(Plugin plugin) {
     this.plugin = plugin;
@@ -26,26 +25,30 @@ public final class PacketChannel implements PluginMessageListener {
 
   @Override
   public void onPluginMessageReceived(String channel, Player player, byte[] message) {
-    Class<?> packetCls = packetMapper.get(channel);
-    if (packetCls == null) {
+    PacketRegistry<? extends Packet> reg = packetMapper.get(channel);
+    if (reg == null) {
       return;
     }
-    ByteArrayDataInput buffer = ByteStreams.newDataInput(message);
-    try {
-      Packet packet = (Packet) packetCls.getConstructor().newInstance();
-      packet.readPayload(buffer);
-      packet.handle(player);
-    } catch (NoSuchMethodException | InstantiationException | IllegalAccessException |
-             InvocationTargetException e) {
-      log.error("Cannot instantiate {}!", packetCls.getSimpleName(), e);
+    FriendlyByteBuf buffer = new FriendlyByteBuf(Unpooled.wrappedBuffer(message));
+    handlePacket(player, buffer, reg);
+  }
+
+  private <T extends Packet> void handlePacket(Player player, FriendlyByteBuf buffer,
+                                               PacketRegistry<T> registry) {
+    T packet = registry.getPacketType().getFactory().get();
+    packet.readPayload(buffer);
+    registry.getHandler().handle(packet, player);
+  }
+
+  public <T extends Packet> PacketRegistry<T> getPacketRegistration(String id) {
+    if (!packetMapper.containsKey(id)) {
+      return null;
     }
+
+    return (PacketRegistry<T>) packetMapper.get(id);
   }
 
-  public Class<? extends Packet> getPacketRegistration(String id) {
-    return this.packetMapper.get(id);
-  }
-
-  public Set<Class<? extends Packet>> getRegistries() {
+  public Set<PacketRegistry<? extends Packet>> getRegistries() {
     return this.packetMapper.values();
   }
 
@@ -59,31 +62,56 @@ public final class PacketChannel implements PluginMessageListener {
     registry.registry.keySet().forEach(channelRegistry);
   }
 
-  public void sendTo(Player player, Packet packet) {
-    Class<? extends Packet> cls = packet.getClass();
-    String id = packetMapper.inverse().get(cls);
+  private <T extends Packet> PacketRegistry<T> createInversedKey(Class<T> cls) {
+    return new PacketRegistry<>(new PacketType<>(cls, null), null);
+  }
+
+  public <T extends Packet> void sendTo(Player player, T packet) {
+    Class<T> cls = (Class<T>) packet.getClass();
+    String id = packetMapper.inverse().get(createInversedKey(cls));
 
     if (id == null) {
       log.error("Packet mapping for {} couldn't be found!", cls.getSimpleName());
       return;
     }
 
-    ByteArrayDataOutput buffer = ByteStreams.newDataOutput();
+    FriendlyByteBuf buffer = new FriendlyByteBuf(Unpooled.buffer());
     packet.writePayload(buffer);
 
-    player.sendPluginMessage(plugin, id, buffer.toByteArray());
+    byte[] arr = new byte[buffer.writerIndex()];
+    buffer.readBytes(arr);
+    player.sendPluginMessage(plugin, id, arr);
+  }
+
+  public <T extends Packet> void sendToAll(T packet) {
+    Class<T> cls = (Class<T>) packet.getClass();
+    String id = packetMapper.inverse().get(createInversedKey(cls));
+
+    if (id == null) {
+      log.error("Packet mapping for {} couldn't be found!", cls.getSimpleName());
+      return;
+    }
+
+    FriendlyByteBuf buffer = new FriendlyByteBuf(Unpooled.buffer());
+    packet.writePayload(buffer);
+
+    byte[] arr = new byte[buffer.writerIndex()];
+    buffer.readBytes(arr);
+    for (Player player : Bukkit.getServer().getOnlinePlayers()) {
+      player.sendPluginMessage(plugin, id, arr);
+    }
   }
 
 
   public static final class Registry {
 
-    private final BiMap<String, Class<? extends Packet>> registry;
+    private final BiMap<String, PacketRegistry<? extends Packet>> registry;
 
-    public Registry(BiMap<String, Class<? extends Packet>> registry) {
+    public Registry(BiMap<String, PacketRegistry<? extends Packet>> registry) {
       this.registry = registry;
     }
 
-    public void register(String name, Class<? extends Packet> packet) {
+    public void register(String name, PacketRegistry<? extends Packet> packet) {
       this.registry.put(name, packet);
     }
   }

@@ -10,3 +10,8 @@ pluginManagement {
 rootProject.name = 'squid-game'
 
 include 'rlgl'
+include 'mgr'
+include 'intermediary'
+include 'roulette'
+include 'trolley'
+include 'dalgona'

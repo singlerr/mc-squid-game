@@ -58,6 +58,7 @@ public final class GameSetupManager {
 
     GameSetup game = this.contexts.get(playerId);
     game.game().getGameSetup().setupEnd((GameSetupContext<GameSettings>) game.context());
+    this.contexts.remove(playerId);
     return true;
   }
 

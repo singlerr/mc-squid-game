@@ -8,6 +8,8 @@ import io.github.singlerr.sg.core.context.GamePlayer;
 import io.github.singlerr.sg.core.context.GameRole;
 import java.util.List;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.Style;
 import org.apache.commons.lang3.EnumUtils;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -61,17 +63,23 @@ public final class GameCommands implements CommandExecutor, TabCompleter {
   }
 
   private boolean errorCallback(CommandSender sender, String message, Object... args) {
-    sender.sendMessage(Component.text(MessageFormatter.basicArrayFormat(message, args)));
+    sender.sendMessage(
+        Component.text(MessageFormatter.basicArrayFormat(message, args)).style(Style.style(
+            NamedTextColor.RED)));
     return false;
   }
 
   private boolean successCallback(CommandSender sender, String message, Object... args) {
-    sender.sendMessage(Component.text(MessageFormatter.basicArrayFormat(message, args)));
+    sender.sendMessage(
+        Component.text(MessageFormatter.basicArrayFormat(message, args)).style(Style.style(
+            NamedTextColor.GREEN)));
     return false;
   }
 
   private boolean infoCallback(CommandSender sender, String message, Object... args) {
-    sender.sendMessage(Component.text(MessageFormatter.basicArrayFormat(message, args)));
+    sender.sendMessage(
+        Component.text(MessageFormatter.basicArrayFormat(message, args)).style(Style.style(
+            NamedTextColor.BLUE)));
     return false;
   }
 
@@ -81,27 +89,57 @@ public final class GameCommands implements CommandExecutor, TabCompleter {
 
   private void modCommand(String id, Game game, CommandSender sender, String[] args) {
     String label = args[0];
+    String[] slicedArgs = slice(args, 1);
     if (label.equalsIgnoreCase("setup")) {
-      String[] slicedArgs = slice(args, 1);
       setupCommand(id, game, sender, slicedArgs);
     } else if (label.equalsIgnoreCase("exec")) {
-      String[] slicedArgs = slice(args, 1);
       execCommand(id, game, sender, slicedArgs);
     } else if (label.equalsIgnoreCase("join")) {
-      String[] slicedArgs = slice(args, 1);
       joinCommand(id, game, sender, slicedArgs);
     } else if (label.equalsIgnoreCase("exit")) {
-      String[] slicedArgs = slice(args, 1);
       exitCommand(id, game, sender, slicedArgs);
+    } else if (label.equalsIgnoreCase("start")) {
+      startCommand(id, game, sender, slicedArgs);
+    } else if (label.equalsIgnoreCase("stop")) {
+      stopCommand(id, game, sender, slicedArgs);
     }
   }
+
+  private void startCommand(String id, Game game, CommandSender sender, String[] args) {
+    if (gameLifecycle.getCurrentGame() != null) {
+      errorCallback(sender, "현재 {} 게임이 진행중입니다. 먼저 이 게임을 종료하고 다시 시도하세요.",
+          gameLifecycle.getCurrentGame().id());
+      return;
+    }
+    gameLifecycle.startGame(id, () -> {
+      successCallback(sender, "게임 시작: {}", id);
+    });
+  }
+
+  private void stopCommand(String id, Game game, CommandSender sender, String[] args) {
+    if (gameLifecycle.getCurrentGame() == null) {
+      errorCallback(sender, "현재 진행중인 게임이 없습니다.");
+      return;
+    }
+
+    if (!gameLifecycle.getCurrentGame().id().equals(id)) {
+      errorCallback(sender, "게임 {}(은)는 진행중이 아닙니다. 현재 진행중인 게임: {}", id,
+          gameLifecycle.getCurrentGame().id());
+      return;
+    }
+
+    gameLifecycle.endGame(() -> {
+      successCallback(sender, "{} 게임이 종료되었습니다.", id);
+    });
+  }
+
 
   private void joinCommand(String id, Game game, CommandSender sender, String[] args) {
     if (args.length < 1) {
       errorCallback(sender, "Specify a role : ", (Object) GameRole.values());
       return;
     }
-    String rawRole = args[0];
+    String rawRole = args[0].toUpperCase();
     GameRole role = EnumUtils.getEnum(GameRole.class, rawRole);
     if (role == null) {
       errorCallback(sender, "Game role named '{}' does not exist", rawRole);
@@ -111,7 +149,7 @@ public final class GameCommands implements CommandExecutor, TabCompleter {
     GameLifecycle.GameInfo gameInfo = gameLifecycle.getCurrentGame();
 
     if (gameInfo == null) {
-      errorCallback(sender, "Currently no games are playing");
+      errorCallback(sender, "현재 게임이 진행중이지 않습니다.");
       return;
     }
 
@@ -120,8 +158,8 @@ public final class GameCommands implements CommandExecutor, TabCompleter {
           id);
       return;
     }
-
     gameInfo.context().joinPlayer(new GamePlayer((Player) sender, role));
+    infoCallback(sender, "게임 참가: {}, {}", id, role);
   }
 
   private void exitCommand(String id, Game game, CommandSender sender, String[] args) {
@@ -145,6 +183,7 @@ public final class GameCommands implements CommandExecutor, TabCompleter {
     }
 
     gameInfo.context().kickPlayer(gamePlayer);
+    infoCallback(sender, "게임 퇴장: {}", id);
   }
 
   private void execCommand(String id, Game game, CommandSender sender, String[] args) {
@@ -181,10 +220,9 @@ public final class GameCommands implements CommandExecutor, TabCompleter {
     } else if (action.equalsIgnoreCase("off")) {
       if (!setupManager.exitSetup(player.getUniqueId())) {
         errorCallback(sender, "You are not now on setup!");
+      } else {
+        successCallback(sender, "You are not now on setup");
       }
-    } else {
-      successCallback(sender, "You are not now on setup");
-      return;
     }
   }
 

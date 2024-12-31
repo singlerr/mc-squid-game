@@ -3,9 +3,13 @@ package io.github.singlerr.sg.rlgl.game;
 import io.github.singlerr.sg.core.setup.GameSettings;
 import io.github.singlerr.sg.core.utils.Region;
 import io.github.singlerr.sg.core.utils.SoundSet;
+import io.github.singlerr.sg.core.utils.Transform;
 import java.util.UUID;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import net.minecraft.util.Mth;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
 
 @Data
 @NoArgsConstructor
@@ -15,8 +19,9 @@ public class RLGLGameSettings implements GameSettings {
   private int time = 30 * 60;
   private Region deadRegion = new Region(null, null);
 
-  private float startDelay = 3f;
-  private float greenLightDelay = 1f;
+  private float startDelay = 1f;
+  private float greenLightTurnDelay = 3f;
+  private float redLightTurnDelay = 3f;
 
   private SoundSet soundOne = new SoundSet("game1.preset1", 2.0f);
   private SoundSet soundTwo = new SoundSet("game1.preset2", 3.0f);
@@ -24,6 +29,11 @@ public class RLGLGameSettings implements GameSettings {
   private SoundSet soundFour = new SoundSet("game1.preset4", 5.0f);
   private SoundSet soundFive = new SoundSet("game1.preset5", 8.0f);
 
+
+  private Transform backState =
+      new Transform(null, new Quaternionf().rotationXYZ(0, 0, Mth.PI), new Vector3f(100f));
+  private Transform frontState =
+      new Transform(null, new Quaternionf().rotationXYZ(0, 0, 0), new Vector3f(100f));
 
   private String startSound = "broadcast.start";
   private String youngHeeWorld;
@@ -33,14 +43,15 @@ public class RLGLGameSettings implements GameSettings {
   private float scaleY = 1.0f;
   private float scaleZ = 1.0f;
 
-  private int nodeIndex = -1;
-  private String modelLocation = "vanilla-gltf:models/younghee.glb";
+  private int nodeIndex = 12;
+  private String modelLocation = "mcgltf:models/younghee.glb";
 
   public void copyFrom(RLGLGameSettings settings) {
     this.killSwitch = settings.killSwitch;
     this.deadRegion = settings.deadRegion;
+    this.greenLightTurnDelay = settings.greenLightTurnDelay;
+    this.redLightTurnDelay = settings.redLightTurnDelay;
     this.startDelay = settings.startDelay;
-    this.greenLightDelay = settings.greenLightDelay;
     this.soundOne = settings.soundOne;
     this.soundTwo = settings.soundTwo;
     this.soundThree = settings.soundThree;

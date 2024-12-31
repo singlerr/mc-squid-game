@@ -9,6 +9,7 @@ import io.github.singlerr.sg.core.events.GameEventListener;
 import io.github.singlerr.sg.core.registry.Registry;
 import io.github.singlerr.sg.core.setup.GameSettings;
 import io.github.singlerr.sg.rlgl.listener.RLGLEventListener;
+import java.util.ArrayList;
 import lombok.Getter;
 import org.bukkit.event.Listener;
 
@@ -33,6 +34,7 @@ public final class RLGLGame implements Game {
     registry.register("rlgl_game_listener", new RLGLGameEventListener());
   }
 
+
   @Override
   public <T extends GameSettings> GameSetup<T> getGameSetup() {
     return (GameSetup<T>) setup;
@@ -41,6 +43,8 @@ public final class RLGLGame implements Game {
   @Override
   public GameContext createContext(GameContext prev, GameEventBus eventBus, GameStatus status,
                                    GameSettings settings) {
-    return (gameContext = new RLGLGameContext(prev.getPlayers(), status, eventBus, settings));
+    return (gameContext =
+        (prev != null ? new RLGLGameContext(prev.getPlayers(), status, eventBus, settings) :
+            new RLGLGameContext(new ArrayList<>(), status, eventBus, settings)));
   }
 }

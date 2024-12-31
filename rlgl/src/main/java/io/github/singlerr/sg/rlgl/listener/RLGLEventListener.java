@@ -100,6 +100,7 @@ public final class RLGLEventListener extends InteractableListener {
     }
 
     itemRole.execute(game.getGameContext(), player);
+    infoCallback(player.getPlayer(), "실행: {}", itemRole.getDisplayName().getString());
     event.setCancelled(true);
   }
 

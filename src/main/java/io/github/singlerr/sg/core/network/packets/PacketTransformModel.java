@@ -1,37 +1,38 @@
 package io.github.singlerr.sg.core.network.packets;
 
-import com.google.common.io.ByteArrayDataInput;
-import com.google.common.io.ByteArrayDataOutput;
 import io.github.singlerr.sg.core.network.Packet;
-import io.github.singlerr.sg.core.utils.SerializationUtils;
-import org.bukkit.entity.Player;
-import org.joml.Quaternionf;
-import org.joml.Vector3f;
+import io.github.singlerr.sg.core.utils.PacketUtils;
+import io.github.singlerr.sg.core.utils.Transform;
+import java.util.UUID;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import net.minecraft.network.FriendlyByteBuf;
 
+@Getter
+@AllArgsConstructor
 public final class PacketTransformModel implements Packet {
 
   public static final String ID = "vanilla-gltf:transform_model";
 
-  private Vector3f translation;
-  private Quaternionf rotation;
-  private Vector3f scale;
+  private UUID id;
+  private int entityId;
+  private Transform transform;
 
-  @Override
-  public void writePayload(ByteArrayDataOutput buffer) {
-    SerializationUtils.writeVector3f(translation, buffer);
-    SerializationUtils.writeQuaternion(rotation, buffer);
-    SerializationUtils.writeVector3f(scale, buffer);
+  public PacketTransformModel() {
+
   }
 
   @Override
-  public void readPayload(ByteArrayDataInput buffer) {
-    translation = SerializationUtils.readVector3f(buffer);
-    rotation = SerializationUtils.readQuaternion(buffer);
-    scale = SerializationUtils.readVector3f(buffer);
+  public void writePayload(FriendlyByteBuf friendlyByteBuf) {
+    friendlyByteBuf.writeUUID(id);
+    friendlyByteBuf.writeInt(entityId);
+    PacketUtils.writeTransform(transform, friendlyByteBuf);
   }
 
   @Override
-  public void handle(Player player) {
-    // no op
+  public void readPayload(FriendlyByteBuf buf) {
+    id = buf.readUUID();
+    entityId = buf.readInt();
+    transform = PacketUtils.readTransform(buf);
   }
 }

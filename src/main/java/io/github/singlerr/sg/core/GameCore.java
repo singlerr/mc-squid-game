@@ -2,8 +2,10 @@ package io.github.singlerr.sg.core;
 
 import io.github.singlerr.sg.core.commands.GameCommands;
 import io.github.singlerr.sg.core.network.NetworkRegistry;
+import io.github.singlerr.sg.core.network.PacketRegistry;
 import io.github.singlerr.sg.core.network.impl.PluginAwareNetworkRegistry;
-import io.github.singlerr.sg.core.network.packets.PacketAnimateTransformation;
+import io.github.singlerr.sg.core.network.packets.PacketAnimateTransformationModel;
+import io.github.singlerr.sg.core.network.packets.PacketInitModel;
 import io.github.singlerr.sg.core.network.packets.PacketTransformModel;
 import io.github.singlerr.sg.core.registry.Registry;
 import io.github.singlerr.sg.core.registry.impl.DefaultGameRegistry;
@@ -41,7 +43,7 @@ public final class GameCore extends JavaPlugin {
     log.info("Loaded following games: {}", gameRegistry.keys());
     this.coreLifecycle =
         new GameLifecycle(gameRegistry, settingsStorage.getLoadedSettings(), instance);
-    this.coreLifecycle.runTaskTimerAsynchronously(instance, 0L, 1L);
+    this.coreLifecycle.runTaskTimer(instance, 0L, 1L);
     registerPackets(networkRegistry);
     ((PluginAwareNetworkRegistry) networkRegistry).registerToMessengers();
     registerCommands();
@@ -67,8 +69,16 @@ public final class GameCore extends JavaPlugin {
   }
 
   private void registerPackets(NetworkRegistry registry) {
-    registry.register(PacketAnimateTransformation.ID, PacketAnimateTransformation.class);
-    registry.register(PacketTransformModel.ID, PacketTransformModel.class);
+    registry.register(PacketAnimateTransformationModel.ID, PacketRegistry.createRegistry(
+        PacketAnimateTransformationModel.class, PacketAnimateTransformationModel::new, (pkt, p) -> {
+        })); // only one direction
+    registry.register(PacketTransformModel.ID,
+        PacketRegistry.createRegistry(PacketTransformModel.class, PacketTransformModel::new,
+            (pkt, p) -> {
+            }));// only one direction
+    registry.register(PacketInitModel.ID,
+        PacketRegistry.createRegistry(PacketInitModel.class, PacketInitModel::new, (pkt, p) -> {
+        }));// only one direction
   }
 
   private void registerCommands() {
@@ -81,7 +91,7 @@ public final class GameCore extends JavaPlugin {
     if (!getDataFolder().exists()) {
       getDataFolder().mkdir();
     }
-    File storageFile = new File(getDataFolder(), "games.yml");
+    File storageFile = new File(getDataFolder(), "games.json");
     boolean copyDefaults = !storageFile.exists();
     this.settingsStorage = new GameStorage(storageFile, gameRegistry);
 
@@ -89,6 +99,7 @@ public final class GameCore extends JavaPlugin {
       if (copyDefaults) {
         GameSettingsRegistry settingsRegistry = settingsStorage.copyDefaults();
         settingsStorage.setLoadedSettings(settingsRegistry);
+        settingsStorage.save();
         log.warn("Configuration file '{}' does not exist. Creating new one", storageFile);
       } else {
         settingsStorage.loadSettings();

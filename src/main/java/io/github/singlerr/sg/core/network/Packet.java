@@ -1,15 +1,11 @@
 package io.github.singlerr.sg.core.network;
 
-import com.google.common.io.ByteArrayDataInput;
-import com.google.common.io.ByteArrayDataOutput;
-import org.bukkit.entity.Player;
+import net.minecraft.network.FriendlyByteBuf;
 
 public interface Packet {
 
-  void writePayload(ByteArrayDataOutput buffer);
+  void writePayload(FriendlyByteBuf buffer);
 
-  void readPayload(ByteArrayDataInput buffer);
-
-  void handle(Player player);
+  void readPayload(FriendlyByteBuf buffer);
 
 }

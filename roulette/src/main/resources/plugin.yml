@@ -1,0 +1,5 @@
+name: roulette
+version: '1.0.0-SNAPSHOT'
+main: io.github.singlerr.roulette.Roulette
+api-version: '1.20'
+authors: [ singlerr ]

@@ -29,18 +29,20 @@ public class GameContext {
 
   public boolean kickPlayer(GamePlayer player) {
     if (PlayerUtils.contains(players, player)) {
+      players.remove(player);
       eventBus.postGameExit(this, player);
       return true;
     }
+
     return false;
   }
 
   public boolean joinPlayer(GamePlayer player) {
     if (!PlayerUtils.contains(players, player)) {
+      players.add(player);
       eventBus.postGameJoin(this, player);
       return true;
     }
-
     return false;
   }
 

@@ -1,0 +1,5 @@
+name: intermediary
+version: '1.0.0-SNAPSHOT'
+main: io.github.singlerr.intermediary.Intermediary
+api-version: '1.20'
+authors: [ singlerr ]

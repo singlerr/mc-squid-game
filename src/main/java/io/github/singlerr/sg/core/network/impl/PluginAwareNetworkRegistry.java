@@ -3,6 +3,7 @@ package io.github.singlerr.sg.core.network.impl;
 import io.github.singlerr.sg.core.network.NetworkRegistry;
 import io.github.singlerr.sg.core.network.Packet;
 import io.github.singlerr.sg.core.network.PacketChannel;
+import io.github.singlerr.sg.core.network.PacketRegistry;
 import io.github.singlerr.sg.core.registry.Registry;
 import io.github.singlerr.sg.core.registry.impl.RegistryFactory;
 import java.util.Collection;
@@ -13,7 +14,7 @@ public final class PluginAwareNetworkRegistry implements NetworkRegistry {
   private final PacketChannel channel;
   private final Plugin plugin;
 
-  private final Registry<Class<? extends Packet>> internal;
+  private final Registry<PacketRegistry<? extends Packet>> internal;
 
   public PluginAwareNetworkRegistry(Plugin plugin) {
     this.plugin = plugin;
@@ -32,17 +33,17 @@ public final class PluginAwareNetworkRegistry implements NetworkRegistry {
   }
 
   @Override
-  public void register(String id, Class<? extends Packet> reg) {
+  public void register(String id, PacketRegistry<? extends Packet> reg) {
     internal.register(id, reg);
   }
 
   @Override
-  public Class<? extends Packet> getById(String id) {
+  public PacketRegistry<? extends Packet> getById(String id) {
     return this.channel.getPacketRegistration(id);
   }
 
   @Override
-  public Collection<Class<? extends Packet>> values() {
+  public Collection<PacketRegistry<? extends Packet>> values() {
     return this.channel.getRegistries();
   }
 
