@@ -1,16 +1,12 @@
-package io.github.singlerr.intermediary;
+package io.github.singlerr.mgr;
 
-import io.github.singlerr.intermediary.game.IntermediaryGame;
+import io.github.singlerr.mgr.game.MGRGame;
 import io.github.singlerr.sg.core.GameRegistry;
 import io.github.singlerr.sg.core.network.NetworkRegistry;
-import lombok.extern.slf4j.Slf4j;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
-@Slf4j
-public final class Intermediary extends JavaPlugin {
-
-  private IntermediaryGame game;
+public final class MarryGoRound extends JavaPlugin {
 
   @Override
   public void onEnable() {
@@ -22,8 +18,7 @@ public final class Intermediary extends JavaPlugin {
       throw new IllegalStateException("Game core does not exist!");
     }
 
-    game = new IntermediaryGame();
-    registry.getProvider().register("intermediary", game);
+    registry.getProvider().register("mgr", new MGRGame());
   }
 
   @Override

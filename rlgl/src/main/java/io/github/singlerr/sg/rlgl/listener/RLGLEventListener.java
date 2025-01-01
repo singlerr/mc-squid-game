@@ -11,10 +11,10 @@ import io.github.singlerr.sg.rlgl.game.RLGLStatus;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.Style;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -53,7 +53,8 @@ public final class RLGLEventListener extends InteractableListener {
       game.getGameContext().getKillTargets().add(player.getPlayer().getUniqueId());
       String msg = MessageFormatter.basicArrayFormat("플레이어 움직임 감지: {}",
           game.getGameContext().getKillTargets().stream()
-              .map(i -> Bukkit.getPlayer(i).getDisplayName()).toArray());
+              .map(i -> context.getPlayer(i).getAdminDisplayName().append(Component.text("-"))
+                  .append(Component.text(context.getPlayer(i).getPlayer().getName()))).toArray());
       player.getPlayer().setGlowing(true);
       for (GamePlayer gamePlayer : game.getGameContext().getPlayers()) {
         if (gamePlayer.getRole() == GameRole.ADMIN) {
@@ -62,8 +63,17 @@ public final class RLGLEventListener extends InteractableListener {
         }
       }
     }
-
   }
+
+  @EventHandler
+  public void onQuit(PlayerDeathEvent event) {
+    Player player = event.getPlayer();
+    GamePlayer gamePlayer;
+    if ((gamePlayer = game.getGameContext().getPlayer(player.getUniqueId())) != null) {
+      game.getGameContext().kickPlayer(gamePlayer);
+    }
+  }
+
 
   @EventHandler
   public void onQuit(PlayerQuitEvent event) {

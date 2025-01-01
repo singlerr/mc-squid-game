@@ -77,6 +77,7 @@ public final class RLGLGameContext extends GameContext {
   }
 
   public void redLight() {
+    killTargets.clear();
     rlglStatus = RLGLStatus.RED_LIGHT;
     PacketAnimateTransformationModel pkt =
         new PacketAnimateTransformationModel(youngHee.getUniqueId(), youngHee.getEntityId(),

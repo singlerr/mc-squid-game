@@ -3,6 +3,7 @@ package io.github.singlerr.sg.core.context;
 import java.util.Objects;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import net.kyori.adventure.text.Component;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,6 +14,12 @@ public class GamePlayer implements Comparable<GamePlayer> {
 
   private final Player player;
   private GameRole role;
+  private Component userDisplayName;
+  private Component adminDisplayName;
+
+  public GamePlayer(Player player, GameRole role) {
+    this(player, role, Component.text(player.getName()), Component.text(player.getName()));
+  }
 
   public static GamePlayer ofUser(Player player) {
     return new GamePlayer(player, GameRole.USER);

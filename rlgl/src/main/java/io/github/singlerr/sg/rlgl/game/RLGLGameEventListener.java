@@ -2,11 +2,14 @@ package io.github.singlerr.sg.rlgl.game;
 
 import io.github.singlerr.sg.core.context.GameContext;
 import io.github.singlerr.sg.core.context.GamePlayer;
+import io.github.singlerr.sg.core.context.GameRole;
 import io.github.singlerr.sg.core.events.GameEventListener;
 import io.github.singlerr.sg.core.network.NetworkRegistry;
 import io.github.singlerr.sg.core.network.packets.PacketInitModel;
 import lombok.extern.slf4j.Slf4j;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.Style;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -26,6 +29,7 @@ public class RLGLGameEventListener implements GameEventListener {
 
   @Override
   public void onJoin(GameContext context, GamePlayer player) {
+    context.assignNumberName(player);
     if (timeIndicator != null) {
       timeIndicator.addPlayer(player.getPlayer());
     }
@@ -41,12 +45,26 @@ public class RLGLGameEventListener implements GameEventListener {
           Bukkit.getServicesManager().getRegistration(NetworkRegistry.class).getProvider();
       network.getChannel().sendTo(player.getPlayer(), pkt);
     }
+    if (player.getRole() == GameRole.USER) {
+      context.syncName(player, GameRole.ADMIN);
+    } else {
+      context.syncName(GameRole.USER, player);
+    }
+
   }
 
   @Override
   public void onExit(GameContext context, GamePlayer player) {
     for (GamePlayer p : context.getPlayers()) {
-      p.getPlayer().sendMessage(Component.text(p.getPlayer().getDisplayName() + " 탈락"));
+      if (p.getRole() == GameRole.USER) {
+        p.getPlayer()
+            .sendMessage(p.getUserDisplayName().append(Component.text(" 탈락").style(Style.style(
+                NamedTextColor.RED))));
+      } else {
+        p.getPlayer()
+            .sendMessage(p.getAdminDisplayName().append(Component.text(" 탈락").style(Style.style(
+                NamedTextColor.RED))));
+      }
     }
   }
 

@@ -10,6 +10,7 @@ import io.github.singlerr.sg.core.network.packets.PacketTransformModel;
 import io.github.singlerr.sg.core.registry.Registry;
 import io.github.singlerr.sg.core.registry.impl.DefaultGameRegistry;
 import io.github.singlerr.sg.core.registry.impl.RegistryFactory;
+import io.github.singlerr.sg.core.setup.GameSettings;
 import java.io.File;
 import java.io.IOException;
 import lombok.Getter;
@@ -106,6 +107,11 @@ public final class GameCore extends JavaPlugin {
       }
     } catch (IOException e) {
       throw new RuntimeException(e);
+    }
+    for (String id : gameRegistry.keys()) {
+      Game g = gameRegistry.getById(id);
+      GameSettings s = settingsStorage.getLoadedSettings().getById(id);
+      g.getGameSetup().getSettings(s);
     }
   }
 

@@ -1,5 +1,5 @@
-name: MarryGoRound
+name: admin
 version: '1.0.0-SNAPSHOT'
-main: io.github.singlerr.mgr.MarryGoRound
+main: io.github.singlerr.admin.Admin
 api-version: '1.20'
 authors: [ singlerr ]
