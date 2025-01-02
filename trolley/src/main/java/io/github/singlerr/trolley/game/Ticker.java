@@ -50,6 +50,10 @@ public final class Ticker {
   }
 
   public void tick(long time) {
+    if (!player.available()) {
+      return;
+    }
+
     if (!shouldTick()) {
       player.getPlayer().setWalkSpeed(idleSpeed);
       return;
@@ -84,6 +88,10 @@ public final class Ticker {
     if (!self.isIntermission()) {
       return;
     }
+    if (!player.available()) {
+      return;
+    }
+
     player.getPlayer().setWalkSpeed(self.isIntermissionSuccess() ? idleSpeed : slowedSpeed);
   }
 
@@ -100,6 +108,9 @@ public final class Ticker {
 
   private void requestIntermission(StatusSwitch self) {
     // send packet to request
+    if (!player.available()) {
+      return;
+    }
     context.sendIntermissionRequest(player.getPlayer());
     nextStatus.add(INTERMISSION.clone());
   }

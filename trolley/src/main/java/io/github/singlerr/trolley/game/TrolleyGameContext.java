@@ -79,7 +79,7 @@ public final class TrolleyGameContext extends GameContext {
           (long) (getGameSettings().getSlowedDuration() * 1000L),
           (long) ((getGameSettings().getIntermissionDuration() + 0.5f) * 1000L),
           (long) (getGameSettings().getIdleDuration() * 1000L));
-      setPlayerStatus(player.getPlayer().getUniqueId(), t);
+      setPlayerStatus(player.getId(), t);
       t.start();
     }
   }

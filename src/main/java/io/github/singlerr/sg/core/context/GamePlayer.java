@@ -1,9 +1,11 @@
 package io.github.singlerr.sg.core.context;
 
 import java.util.Objects;
+import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import net.kyori.adventure.text.Component;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
@@ -11,14 +13,15 @@ import org.jetbrains.annotations.NotNull;
 @AllArgsConstructor
 public class GamePlayer implements Comparable<GamePlayer> {
 
-
-  private final Player player;
+  private UUID id;
+  private Player player;
   private GameRole role;
   private Component userDisplayName;
   private Component adminDisplayName;
 
   public GamePlayer(Player player, GameRole role) {
-    this(player, role, Component.text(player.getName()), Component.text(player.getName()));
+    this(player.getUniqueId(), player, role, Component.text(player.getName()),
+        Component.text(player.getName()));
   }
 
   public static GamePlayer ofUser(Player player) {
@@ -31,6 +34,19 @@ public class GamePlayer implements Comparable<GamePlayer> {
 
   public static GamePlayer ofTroy(Player player) {
     return new GamePlayer(player, GameRole.TROY);
+  }
+
+  public boolean available() {
+    if (player == null) {
+      player = Bukkit.getPlayer(id);
+    }
+    return player != null;
+  }
+
+  public void sendMessage(Component component) {
+    if (player != null) {
+      player.sendMessage(component);
+    }
   }
 
   public boolean shouldInteract() {
@@ -48,15 +64,11 @@ public class GamePlayer implements Comparable<GamePlayer> {
       return false;
     }
     GamePlayer player1 = (GamePlayer) o;
-    if (player.getPlayer() == null || player1.getPlayer() == null) {
-      return false;
-    }
-
-    return Objects.equals(player.getPlayer().getUniqueId(), player1.getPlayer().getUniqueId());
+    return Objects.equals(id, player1.id);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(player.getUniqueId());
+    return Objects.hashCode(id);
   }
 }

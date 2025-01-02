@@ -9,6 +9,8 @@ import io.github.singlerr.sg.core.context.GameRole;
 import io.github.singlerr.sg.core.context.GameStatus;
 import io.github.singlerr.sg.core.network.NetworkRegistry;
 import io.github.singlerr.sg.core.setup.GameSettings;
+import java.security.SecureRandom;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,23 +28,26 @@ import org.bukkit.inventory.meta.ItemMeta;
 public class DalgonaGameContext extends GameContext {
 
   private final Map<UUID, PlayerDalgonaStatus> status;
+
+  @Getter
+  private final Map<UUID, String> dalgonaImages;
+  private final SecureRandom random;
   @Getter
   @Setter
   private DalgonaGameStatus gameStatus;
   @Getter
   @Setter
-  private String currentDalgonaId;
-
-  @Getter
-  @Setter
   private long startTime;
 
-  public DalgonaGameContext(List<GamePlayer> players,
+  public DalgonaGameContext(Map<UUID, GamePlayer> players,
                             GameStatus status,
                             GameEventBus eventBus,
+
                             GameSettings settings) {
     super(players, status, eventBus, settings);
     this.status = new HashMap<>();
+    this.dalgonaImages = new HashMap<>();
+    this.random = new SecureRandom();
   }
 
   public DalgonaGameSettings getGameSettings() {
@@ -78,22 +83,32 @@ public class DalgonaGameContext extends GameContext {
   }
 
   public void provideDalgona() {
+    List<String> dalgonas = new ArrayList<>(getGameSettings().getDalgonaImages().values());
     ItemStack dalgonaItem = new ItemStack(getGameSettings().getDalgonaType());
     ItemMeta meta = dalgonaItem.getItemMeta();
     meta.displayName(Component.text("달고나").style(Style.style(NamedTextColor.YELLOW)));
-
+    getGameSettings().getDalgonaImages().values();
     for (GamePlayer player : getPlayers()) {
+      if (!player.available()) {
+        continue;
+      }
       if (player.getRole().getLevel() <= GameRole.TROY.getLevel()) {
+        String dalgona = dalgonas.get(random.nextInt(dalgonas.size()));
+        dalgonaImages.put(player.getPlayer().getUniqueId(), dalgona);
         player.getPlayer().getInventory().addItem(dalgonaItem);
       }
     }
   }
 
   public void beginDalgona(Player player) {
+    if (!dalgonaImages.containsKey(player.getUniqueId())) {
+      return;
+    }
+    String dalgonaImage = dalgonaImages.get(player.getUniqueId());
     status.put(player.getUniqueId(), PlayerDalgonaStatus.IDLE);
     NetworkRegistry
         network = Bukkit.getServicesManager().getRegistration(NetworkRegistry.class).getProvider();
-    network.getChannel().sendTo(player, new PacketDalgonaRequest(currentDalgonaId));
+    network.getChannel().sendTo(player, new PacketDalgonaRequest(dalgonaImage));
   }
 
   public void end() {

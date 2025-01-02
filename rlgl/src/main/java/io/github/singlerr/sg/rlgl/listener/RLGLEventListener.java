@@ -35,6 +35,9 @@ public final class RLGLEventListener extends InteractableListener {
     if (player == null) {
       return;
     }
+    if (!player.available()) {
+      return;
+    }
     if (!player.shouldInteract()) {
       return;
     }
@@ -106,6 +109,10 @@ public final class RLGLEventListener extends InteractableListener {
 
     RLGLItemRole itemRole = RLGLItemRole.getRole(event.getItem());
     if (itemRole == null) {
+      return;
+    }
+
+    if (!player.available()) {
       return;
     }
 

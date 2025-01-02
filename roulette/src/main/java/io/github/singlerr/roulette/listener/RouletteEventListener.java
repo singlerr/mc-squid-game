@@ -46,6 +46,10 @@ public final class RouletteEventListener extends InteractableListener {
       return;
     }
 
+    if (!p.available()) {
+      return;
+    }
+
     infoCallback(p.getPlayer(), "리볼버 재장전 - 총 {}발, 진탄환 {}발", gun.getBulletAmount(),
         gun.getRealBulletAmount());
     gun.reload(gun.getBulletAmount(), gun.getRealBulletAmount());

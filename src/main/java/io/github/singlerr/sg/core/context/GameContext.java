@@ -1,11 +1,10 @@
 package io.github.singlerr.sg.core.context;
 
-import com.google.common.collect.Lists;
 import io.github.singlerr.sg.core.setup.GameSettings;
-import io.github.singlerr.sg.core.utils.PlayerUtils;
 import java.util.Collection;
 import java.util.EnumSet;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 import java.util.function.Predicate;
 import lombok.AccessLevel;
@@ -23,19 +22,27 @@ import org.bukkit.potion.PotionEffectType;
 @Getter
 public class GameContext {
 
-  private final List<GamePlayer> players;
+  private final Map<UUID, GamePlayer> players;
   @Getter(value = AccessLevel.NONE)
   private final GameEventBus eventBus;
   private final GameSettings settings;
   @Setter
   private GameStatus status;
 
-  public GameContext(List<GamePlayer> players, GameStatus status, GameEventBus eventBus,
+  public GameContext(Map<UUID, GamePlayer> players, GameStatus status, GameEventBus eventBus,
                      GameSettings settings) {
-    this.players = Lists.newArrayList(players);
+    this.players = new HashMap<>(players);
     this.status = status;
     this.eventBus = eventBus;
     this.settings = settings;
+  }
+
+  public Map<UUID, GamePlayer> getPlayerMap() {
+    return players;
+  }
+
+  public Collection<GamePlayer> getPlayers() {
+    return players.values();
   }
 
   public Collection<GamePlayer> getPlayers(int level) {
@@ -47,14 +54,18 @@ public class GameContext {
   }
 
   public boolean kickPlayer(GamePlayer player) {
-    if (PlayerUtils.contains(players, player)) {
+    if (!player.available()) {
+      players.remove(player.getId());
+      return true;
+    }
+    if (players.containsKey(player.getId())) {
       if (player.getRole() == GameRole.TROY) {
         player.setRole(GameRole.ADMIN);
         player.getPlayer().addPotionEffect(PotionEffectType.INVISIBILITY.createEffect(9999, 1));
         player.getPlayer().addPotionEffect(PotionEffectType.BLINDNESS.createEffect(9999, 1));
         player.getPlayer().setGameMode(GameMode.CREATIVE);
       } else {
-        players.remove(player);
+        players.remove(player.getId());
         eventBus.postGameExit(this, player);
       }
       return true;
@@ -64,8 +75,11 @@ public class GameContext {
   }
 
   public boolean joinPlayer(GamePlayer player) {
-    if (!PlayerUtils.contains(players, player)) {
-      players.add(player);
+    if (!player.available()) {
+      return true;
+    }
+    if (!players.containsKey(player.getId())) {
+      players.put(player.getId(), player);
       eventBus.postGameJoin(this, player);
       return true;
     }
@@ -74,7 +88,7 @@ public class GameContext {
 
   public void broadcast(Component component, GameRole role) {
     getPlayers().stream().filter(p -> p.getRole() == role)
-        .forEach(p -> p.getPlayer().sendMessage(component));
+        .forEach(p -> p.sendMessage(component));
   }
 
   public void assignNumberName(GamePlayer player) {
@@ -84,8 +98,7 @@ public class GameContext {
   }
 
   public GamePlayer getPlayer(UUID playerId) {
-    return players.stream().filter(p -> p.getPlayer().getUniqueId().equals(playerId)).findAny()
-        .orElse(null);
+    return players.get(playerId);
   }
 
   public void syncNameLowerThan(int level, GamePlayer target) {
@@ -101,7 +114,13 @@ public class GameContext {
   }
 
   public void syncName(Collection<GamePlayer> players, GamePlayer target) {
+    if (!target.available()) {
+      return;
+    }
     for (GamePlayer player : players) {
+      if (!player.available()) {
+        continue;
+      }
       ServerPlayer handle = ((CraftPlayer) player.getPlayer()).getHandle();
       ClientboundPlayerInfoUpdatePacket pkt = new ClientboundPlayerInfoUpdatePacket(EnumSet.of(
           ClientboundPlayerInfoUpdatePacket.Action.UPDATE_DISPLAY_NAME),
@@ -127,6 +146,9 @@ public class GameContext {
   }
 
   public void syncName(GamePlayer player, Collection<GamePlayer> targets) {
+    if (!player.available()) {
+      return;
+    }
     ServerPlayer handle = ((CraftPlayer) player.getPlayer()).getHandle();
     ClientboundPlayerInfoUpdatePacket pkt = new ClientboundPlayerInfoUpdatePacket(EnumSet.of(
         ClientboundPlayerInfoUpdatePacket.Action.UPDATE_DISPLAY_NAME),
@@ -135,6 +157,9 @@ public class GameContext {
             net.minecraft.network.chat.Component.literal(player.getAdminDisplayName().toString()),
             Optionull.map(handle.getChatSession(), RemoteChatSession::asData)));
     for (GamePlayer target : targets) {
+      if (!target.available()) {
+        continue;
+      }
       ((CraftPlayer) target.getPlayer()).getHandle().connection.send(pkt);
     }
   }

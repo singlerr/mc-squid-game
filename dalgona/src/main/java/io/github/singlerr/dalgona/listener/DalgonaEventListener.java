@@ -43,8 +43,12 @@ public final class DalgonaEventListener extends InteractableListener {
       return;
     }
 
+    if (!gamePlayer.available()) {
+      return;
+    }
+
     PlayerDalgonaStatus status;
-    if ((status = context.getStatus(gamePlayer.getPlayer().getUniqueId())) == null) {
+    if ((status = context.getStatus(gamePlayer.getId())) == null) {
       return;
     }
 

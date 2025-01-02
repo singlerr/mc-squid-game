@@ -29,6 +29,9 @@ public class RLGLGameEventListener implements GameEventListener {
 
   @Override
   public void onJoin(GameContext context, GamePlayer player) {
+    if (!player.available()) {
+      return;
+    }
     context.assignNumberName(player);
     if (timeIndicator != null) {
       timeIndicator.addPlayer(player.getPlayer());
@@ -50,20 +53,17 @@ public class RLGLGameEventListener implements GameEventListener {
     } else {
       context.syncNameLowerThan(GameRole.TROY.getLevel(), player);
     }
-
   }
 
   @Override
   public void onExit(GameContext context, GamePlayer player) {
     for (GamePlayer p : context.getPlayers()) {
       if (p.getRole().getLevel() <= GameRole.TROY.getLevel()) {
-        p.getPlayer()
-            .sendMessage(p.getUserDisplayName().append(Component.text(" 탈락").style(Style.style(
-                NamedTextColor.RED))));
+        p.sendMessage(p.getUserDisplayName().append(Component.text(" 탈락").style(Style.style(
+            NamedTextColor.RED))));
       } else {
-        p.getPlayer()
-            .sendMessage(p.getAdminDisplayName().append(Component.text(" 탈락").style(Style.style(
-                NamedTextColor.RED))));
+        p.sendMessage(p.getAdminDisplayName().append(Component.text(" 탈락").style(Style.style(
+            NamedTextColor.RED))));
       }
     }
   }
@@ -119,7 +119,8 @@ public class RLGLGameEventListener implements GameEventListener {
       }
     }
     timeIndicator = Bukkit.createBossBar("", BarColor.RED, BarStyle.SOLID);
-    ctx.getPlayers().stream().map(GamePlayer::getPlayer).forEach(p -> timeIndicator.addPlayer(p));
+    ctx.getPlayers().stream().filter(GamePlayer::available).map(GamePlayer::getPlayer)
+        .forEach(p -> timeIndicator.addPlayer(p));
   }
 
   @Override

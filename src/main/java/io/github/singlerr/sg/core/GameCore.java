@@ -13,6 +13,7 @@ import io.github.singlerr.sg.core.registry.impl.RegistryFactory;
 import io.github.singlerr.sg.core.setup.GameSettings;
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.bukkit.Bukkit;
@@ -91,7 +92,15 @@ public final class GameCore extends JavaPlugin {
   private void loadSettings() {
     if (!getDataFolder().exists()) {
       getDataFolder().mkdir();
+      saveDefaultConfig();
+      reloadConfig();
     }
+
+    if (getAdminSkinUrl() == null || getPlayerSkinUrl() == null) {
+      saveDefaultConfig();
+      reloadConfig();
+    }
+
     File storageFile = new File(getDataFolder(), "games.json");
     boolean copyDefaults = !storageFile.exists();
     this.settingsStorage = new GameStorage(storageFile, gameRegistry);
@@ -125,5 +134,13 @@ public final class GameCore extends JavaPlugin {
     for (Listener l : eventReg.values()) {
       getServer().getPluginManager().registerEvents(l, instance);
     }
+  }
+
+  public String getAdminSkinUrl() {
+    return getConfig().getString("admin_skin_url");
+  }
+
+  public List<String> getPlayerSkinUrl() {
+    return getConfig().getStringList("player_skin_url");
   }
 }

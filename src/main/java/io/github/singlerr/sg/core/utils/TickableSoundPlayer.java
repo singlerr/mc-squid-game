@@ -26,6 +26,9 @@ public final class TickableSoundPlayer {
       SoundQueue sound = it.next();
       if (sound.shouldPlaySound()) {
         for (GamePlayer player : sound.getPlayers()) {
+          if (!player.available()) {
+            continue;
+          }
           player.getPlayer().playSound(player.getPlayer(), sound.getSound(), 1.0f, 1.0f);
         }
         sound.shouldPlaySound(false);

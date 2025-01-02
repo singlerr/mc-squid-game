@@ -20,10 +20,15 @@ allprojects {
 
     repositories {
         mavenCentral()
+        maven {
+            name 'codemc'
+            url 'https://repo.codemc.org/repository/maven-public/'
+        }
     }
 
     dependencies {
         paperweight.paperDevBundle(paper_version)
+        compileOnly "net.skinsrestorer:skinsrestorer-api:${project.skin_restorer_version}"
         testImplementation platform('org.junit:junit-bom:5.10.0')
         testImplementation 'org.junit.jupiter:junit-jupiter'
     }
@@ -62,3 +67,4 @@ allprojects {
         dependsOn reobfJar
     }
 }
+
