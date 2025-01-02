@@ -6,6 +6,7 @@ import io.github.singlerr.sg.core.context.GameStatus;
 import io.github.singlerr.sg.core.events.GameEventListener;
 import io.github.singlerr.sg.core.registry.Registry;
 import io.github.singlerr.sg.core.setup.GameSettings;
+import java.util.HashMap;
 import org.bukkit.event.Listener;
 
 public interface Game {
@@ -20,7 +21,7 @@ public interface Game {
 
   default GameContext createContext(GameContext prev, GameEventBus eventBus, GameStatus status,
                                     GameSettings settings) {
-    return new GameContext(prev.getPlayers(), status, eventBus, settings);
+    return new GameContext(new HashMap<>(), status, eventBus, settings);
   }
 
 }

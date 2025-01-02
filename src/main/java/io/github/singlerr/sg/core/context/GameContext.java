@@ -26,8 +26,13 @@ public class GameContext {
   @Getter(value = AccessLevel.NONE)
   private final GameEventBus eventBus;
   private final GameSettings settings;
+  @Getter
+  private final int initialPlayerSize;
   @Setter
   private GameStatus status;
+  @Getter
+  @Setter
+  private UUID id;
 
   public GameContext(Map<UUID, GamePlayer> players, GameStatus status, GameEventBus eventBus,
                      GameSettings settings) {
@@ -35,6 +40,7 @@ public class GameContext {
     this.status = status;
     this.eventBus = eventBus;
     this.settings = settings;
+    this.initialPlayerSize = players.size();
   }
 
   public Map<UUID, GamePlayer> getPlayerMap() {

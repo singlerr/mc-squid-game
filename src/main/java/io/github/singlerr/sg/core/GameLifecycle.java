@@ -2,6 +2,7 @@ package io.github.singlerr.sg.core;
 
 import io.github.singlerr.sg.core.context.GameContext;
 import io.github.singlerr.sg.core.context.GameEventBus;
+import io.github.singlerr.sg.core.context.GameHistoryRecorder;
 import io.github.singlerr.sg.core.context.GameStatus;
 import io.github.singlerr.sg.core.context.impl.DefaultGameEventBus;
 import io.github.singlerr.sg.core.events.GameEventListener;
@@ -9,9 +10,10 @@ import io.github.singlerr.sg.core.registry.Registry;
 import io.github.singlerr.sg.core.registry.impl.RegistryFactory;
 import io.github.singlerr.sg.core.setup.GameSettings;
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Deque;
+import java.util.HashMap;
+import java.util.UUID;
 import java.util.function.Consumer;
 import lombok.Getter;
 import org.bukkit.event.HandlerList;
@@ -70,6 +72,11 @@ public final class GameLifecycle extends BukkitRunnable {
 
   private void startGame(String id, Game game) {
     if (game != null) {
+
+      if (prevGameContext != null) {
+        GameHistoryRecorder.recordGame(prevGameContext.getId(), prevGameContext);
+      }
+
       game.initialize();
       Registry<GameEventListener> gameListeners =
           initRegistry("game_events", game::registerGameListener);
@@ -81,9 +88,10 @@ public final class GameLifecycle extends BukkitRunnable {
       GameContext context =
           game.createContext(prevGameContext, eventBus, GameStatus.START, settings);
       if (context == null) {
-        context = new GameContext(new ArrayList<>(), GameStatus.START, eventBus,
+        context = new GameContext(new HashMap<>(), GameStatus.START, eventBus,
             settings);
       }
+      context.setId(UUID.fromString(id));
       currentGame = new GameInfo(id, game, context, eventBus, minecraftListeners);
       eventBus.postGameStart(context);
     }

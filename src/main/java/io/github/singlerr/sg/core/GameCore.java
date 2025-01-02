@@ -30,6 +30,7 @@ public final class GameCore extends JavaPlugin {
 
   private NetworkRegistry networkRegistry;
   private GameRegistry gameRegistry;
+  @Getter
   private GameLifecycle coreLifecycle;
   private GameSetupManager setupManager;
 

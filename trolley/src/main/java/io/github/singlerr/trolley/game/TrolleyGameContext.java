@@ -13,7 +13,6 @@ import io.github.singlerr.trolley.network.PacketIntermissionRequest;
 import java.security.SecureRandom;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import lombok.Getter;
@@ -37,7 +36,7 @@ public final class TrolleyGameContext extends GameContext {
   @Setter
   private TrolleyGameStatus gameStatus;
 
-  public TrolleyGameContext(List<GamePlayer> players,
+  public TrolleyGameContext(Map<UUID, GamePlayer> players,
                             GameStatus status,
                             GameEventBus eventBus,
                             GameSettings settings) {

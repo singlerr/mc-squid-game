@@ -9,7 +9,7 @@ import io.github.singlerr.sg.core.context.GameStatus;
 import io.github.singlerr.sg.core.events.GameEventListener;
 import io.github.singlerr.sg.core.registry.Registry;
 import io.github.singlerr.sg.core.setup.GameSettings;
-import java.util.ArrayList;
+import java.util.HashMap;
 import org.bukkit.event.Listener;
 
 public final class IntermediaryGame implements Game {
@@ -41,7 +41,8 @@ public final class IntermediaryGame implements Game {
   public GameContext createContext(GameContext prev, GameEventBus eventBus, GameStatus status,
                                    GameSettings settings) {
     return (context =
-        prev != null ? new IntermediaryGameContext(prev.getPlayers(), status, eventBus, settings) :
-            new IntermediaryGameContext(new ArrayList<>(), status, eventBus, settings));
+        prev != null ?
+            new IntermediaryGameContext(prev.getPlayerMap(), status, eventBus, settings) :
+            new IntermediaryGameContext(new HashMap<>(), status, eventBus, settings));
   }
 }

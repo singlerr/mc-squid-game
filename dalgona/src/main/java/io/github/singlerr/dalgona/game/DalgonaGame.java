@@ -9,7 +9,7 @@ import io.github.singlerr.sg.core.context.GameStatus;
 import io.github.singlerr.sg.core.events.GameEventListener;
 import io.github.singlerr.sg.core.registry.Registry;
 import io.github.singlerr.sg.core.setup.GameSettings;
-import java.util.ArrayList;
+import java.util.HashMap;
 import lombok.Getter;
 import org.bukkit.event.Listener;
 
@@ -39,8 +39,8 @@ public final class DalgonaGame implements Game {
   public GameContext createContext(GameContext prev, GameEventBus eventBus, GameStatus status,
                                    GameSettings settings) {
     return (context =
-        (prev != null ? new DalgonaGameContext(prev.getPlayers(), status, eventBus, settings) :
-            new DalgonaGameContext(new ArrayList<>(), status, eventBus, settings)));
+        (prev != null ? new DalgonaGameContext(prev.getPlayerMap(), status, eventBus, settings) :
+            new DalgonaGameContext(new HashMap<>(), status, eventBus, settings)));
   }
 
   @Override

@@ -9,7 +9,7 @@ import io.github.singlerr.sg.core.events.GameEventListener;
 import io.github.singlerr.sg.core.registry.Registry;
 import io.github.singlerr.sg.core.setup.GameSettings;
 import io.github.singlerr.sg.rlgl.listener.RLGLEventListener;
-import java.util.ArrayList;
+import java.util.HashMap;
 import lombok.Getter;
 import org.bukkit.event.Listener;
 
@@ -44,7 +44,7 @@ public final class RLGLGame implements Game {
   public GameContext createContext(GameContext prev, GameEventBus eventBus, GameStatus status,
                                    GameSettings settings) {
     return (gameContext =
-        (prev != null ? new RLGLGameContext(prev.getPlayers(), status, eventBus, settings) :
-            new RLGLGameContext(new ArrayList<>(), status, eventBus, settings)));
+        (prev != null ? new RLGLGameContext(prev.getPlayerMap(), status, eventBus, settings) :
+            new RLGLGameContext(new HashMap<>(), status, eventBus, settings)));
   }
 }

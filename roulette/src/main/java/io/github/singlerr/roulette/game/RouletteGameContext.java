@@ -6,7 +6,8 @@ import io.github.singlerr.sg.core.context.GameEventBus;
 import io.github.singlerr.sg.core.context.GamePlayer;
 import io.github.singlerr.sg.core.context.GameStatus;
 import io.github.singlerr.sg.core.setup.GameSettings;
-import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.Style;
@@ -21,7 +22,7 @@ public final class RouletteGameContext extends GameContext {
   private static final NamespacedKey GUN_TAG = new NamespacedKey("roulette", "gun");
   private static final Gson GSON = new Gson();
 
-  public RouletteGameContext(List<GamePlayer> players,
+  public RouletteGameContext(Map<UUID, GamePlayer> players,
                              GameStatus status,
                              GameEventBus eventBus,
                              GameSettings settings) {

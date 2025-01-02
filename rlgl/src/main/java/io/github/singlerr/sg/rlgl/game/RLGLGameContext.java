@@ -13,7 +13,7 @@ import io.github.singlerr.sg.core.utils.SoundSet;
 import io.github.singlerr.sg.core.utils.TaskScheduler;
 import io.github.singlerr.sg.core.utils.TickableSoundPlayer;
 import java.util.HashSet;
-import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import lombok.Getter;
@@ -47,7 +47,7 @@ public final class RLGLGameContext extends GameContext {
   @Setter
   private TaskScheduler scheduler;
 
-  public RLGLGameContext(List<GamePlayer> players,
+  public RLGLGameContext(Map<UUID, GamePlayer> players,
                          GameStatus status,
                          GameEventBus eventBus,
                          GameSettings settings) {

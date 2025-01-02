@@ -7,6 +7,9 @@ import io.github.singlerr.sg.core.setup.GameSetupContext;
 import org.bukkit.event.Listener;
 
 public final class RouletteGameSetup implements GameSetup<RouletteGameSettings> {
+
+  private RouletteGameSettings settings = new RouletteGameSettings();
+
   @Override
   public void registerListener(GameSetupManager setupManager, Registry<Listener> registry) {
 
@@ -24,16 +27,19 @@ public final class RouletteGameSetup implements GameSetup<RouletteGameSettings> 
 
   @Override
   public Class<RouletteGameSettings> getType() {
-    return null;
+    return RouletteGameSettings.class;
   }
 
   @Override
   public RouletteGameSettings getSettings(RouletteGameSettings data) {
-    return null;
+    if (data != null) {
+      settings.copy(data);
+    }
+    return settings;
   }
 
   @Override
   public GameSetupContext<RouletteGameSettings> createContext() {
-    return null;
+    return new RouletteGameSetupContext(settings);
   }
 }

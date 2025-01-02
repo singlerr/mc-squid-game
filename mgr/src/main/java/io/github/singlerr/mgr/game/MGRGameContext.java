@@ -13,9 +13,9 @@ import io.github.singlerr.sg.core.utils.TaskScheduler;
 import io.github.singlerr.sg.core.utils.TickableSoundPlayer;
 import java.security.SecureRandom;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -57,7 +57,7 @@ public final class MGRGameContext extends GameContext {
 
   private Set<Location> barrierCache;
 
-  public MGRGameContext(List<GamePlayer> players,
+  public MGRGameContext(Map<UUID, GamePlayer> players,
                         GameStatus status,
                         GameEventBus eventBus,
                         GameSettings settings) {
