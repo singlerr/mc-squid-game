@@ -6,4 +6,5 @@ public final class DalgonaGameSetupContext extends GameSetupContext<DalgonaGameS
   public DalgonaGameSetupContext(DalgonaGameSettings settings) {
     super(settings);
   }
+
 }

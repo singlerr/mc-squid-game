@@ -29,17 +29,17 @@ public final class MGRGameEventListener implements GameEventListener {
 
   @Override
   public void onJoin(GameContext context, GamePlayer player) {
-    if (player.getRole() == GameRole.USER) {
+    if (player.getRole().getLevel() <= GameRole.TROY.getLevel()) {
       context.syncName(player, GameRole.ADMIN);
     } else {
-      context.syncName(GameRole.USER, player);
+      context.syncNameLowerThan(GameRole.TROY.getLevel(), player);
     }
   }
 
   @Override
   public void onExit(GameContext context, GamePlayer player) {
     for (GamePlayer p : context.getPlayers()) {
-      if (p.getRole() == GameRole.USER) {
+      if (p.getRole().getLevel() <= GameRole.TROY.getLevel()) {
         p.getPlayer()
             .sendMessage(p.getUserDisplayName().append(Component.text(" 탈락").style(Style.style(
                 NamedTextColor.RED))));
@@ -129,6 +129,11 @@ public final class MGRGameEventListener implements GameEventListener {
               });
               infoCallback(sender, "이제 막대기를 이용해 블럭을 지정하세요.");
             } catch (NumberFormatException e) {
+              if (args[2].equalsIgnoreCase("q")) {
+                context.endDoorSetup(player.getUniqueId());
+                successCallback(sender, "설정 모드 해제");
+                return;
+              }
               errorCallback(sender, "자연수를 입력하세요.");
             }
           }
@@ -139,6 +144,11 @@ public final class MGRGameEventListener implements GameEventListener {
               context.beginSelector(player.getUniqueId(), roomNum);
               infoCallback(sender, "이제 나무 도끼를 이용해 영역을 지정하세요.");
             } catch (NumberFormatException e) {
+              if (args[2].equalsIgnoreCase("q")) {
+                context.endDoorSetup(player.getUniqueId());
+                successCallback(sender, "설정 모드 해제");
+                return;
+              }
               errorCallback(sender, "자연수를 입력하세요.");
             }
           }

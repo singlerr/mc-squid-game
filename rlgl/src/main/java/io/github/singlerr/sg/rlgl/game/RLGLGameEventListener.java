@@ -45,10 +45,10 @@ public class RLGLGameEventListener implements GameEventListener {
           Bukkit.getServicesManager().getRegistration(NetworkRegistry.class).getProvider();
       network.getChannel().sendTo(player.getPlayer(), pkt);
     }
-    if (player.getRole() == GameRole.USER) {
+    if (player.getRole().getLevel() == GameRole.TROY.getLevel()) {
       context.syncName(player, GameRole.ADMIN);
     } else {
-      context.syncName(GameRole.USER, player);
+      context.syncNameLowerThan(GameRole.TROY.getLevel(), player);
     }
 
   }
@@ -56,7 +56,7 @@ public class RLGLGameEventListener implements GameEventListener {
   @Override
   public void onExit(GameContext context, GamePlayer player) {
     for (GamePlayer p : context.getPlayers()) {
-      if (p.getRole() == GameRole.USER) {
+      if (p.getRole().getLevel() <= GameRole.TROY.getLevel()) {
         p.getPlayer()
             .sendMessage(p.getUserDisplayName().append(Component.text(" 탈락").style(Style.style(
                 NamedTextColor.RED))));

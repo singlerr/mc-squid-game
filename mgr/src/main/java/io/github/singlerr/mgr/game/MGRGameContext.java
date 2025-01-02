@@ -214,7 +214,7 @@ public final class MGRGameContext extends GameContext {
       if (gamePlayer == null) {
         return false;
       }
-      return gamePlayer.getRole() == GameRole.USER;
+      return gamePlayer.getRole().getLevel() <= GameRole.TROY.getLevel();
     }).size();
   }
 }

@@ -29,12 +29,12 @@ public class GamePlayer implements Comparable<GamePlayer> {
     return new GamePlayer(player, GameRole.ADMIN);
   }
 
-  public static GamePlayer ofSpectator(Player player) {
-    return new GamePlayer(player, GameRole.SPECTATOR);
+  public static GamePlayer ofTroy(Player player) {
+    return new GamePlayer(player, GameRole.TROY);
   }
 
   public boolean shouldInteract() {
-    return role == GameRole.USER;
+    return role.getLevel() <= GameRole.USER.getLevel();
   }
 
   @Override

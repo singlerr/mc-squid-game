@@ -2,6 +2,7 @@ package io.github.singlerr.dalgona.game;
 
 import io.github.singlerr.sg.core.context.GameContext;
 import io.github.singlerr.sg.core.context.GamePlayer;
+import io.github.singlerr.sg.core.context.GameRole;
 import io.github.singlerr.sg.core.events.GameEventListener;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -29,7 +30,17 @@ public final class DalgonaGameEventListener implements GameEventListener {
 
   @Override
   public void onExit(GameContext context, GamePlayer player) {
-
+    for (GamePlayer p : context.getPlayers()) {
+      if (p.getRole().getLevel() <= GameRole.TROY.getLevel()) {
+        p.getPlayer()
+            .sendMessage(p.getUserDisplayName().append(Component.text(" 탈락").style(Style.style(
+                NamedTextColor.RED))));
+      } else {
+        p.getPlayer()
+            .sendMessage(p.getAdminDisplayName().append(Component.text(" 탈락").style(Style.style(
+                NamedTextColor.RED))));
+      }
+    }
   }
 
   @Override

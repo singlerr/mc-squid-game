@@ -14,17 +14,17 @@ public final class IntermediaryGameEventListener implements GameEventListener {
   @Override
   public void onJoin(GameContext context, GamePlayer player) {
     context.assignNumberName(player);
-    if (player.getRole() == GameRole.USER) {
+    if (player.getRole().getLevel() <= GameRole.TROY.getLevel()) {
       context.syncName(player, GameRole.ADMIN);
     } else {
-      context.syncName(GameRole.USER, player);
+      context.syncNameLowerThan(GameRole.USER.getLevel(), player);
     }
   }
 
   @Override
   public void onExit(GameContext context, GamePlayer player) {
     for (GamePlayer p : context.getPlayers()) {
-      if (p.getRole() == GameRole.USER) {
+      if (p.getRole().getLevel() <= GameRole.TROY.getLevel()) {
         p.getPlayer()
             .sendMessage(p.getUserDisplayName().append(Component.text(" 탈락").style(Style.style(
                 NamedTextColor.RED))));

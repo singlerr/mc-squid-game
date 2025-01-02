@@ -16,7 +16,9 @@ import net.minecraft.Optionull;
 import net.minecraft.network.chat.RemoteChatSession;
 import net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket;
 import net.minecraft.server.level.ServerPlayer;
+import org.bukkit.GameMode;
 import org.bukkit.craftbukkit.v1_20_R3.entity.CraftPlayer;
+import org.bukkit.potion.PotionEffectType;
 
 @Getter
 public class GameContext {
@@ -36,10 +38,25 @@ public class GameContext {
     this.settings = settings;
   }
 
+  public Collection<GamePlayer> getPlayers(int level) {
+    return getPlayers().stream().filter(p -> p.getRole().getLevel() <= level).toList();
+  }
+
+  public Collection<GamePlayer> getPlayers(GameRole role) {
+    return getPlayers().stream().filter(p -> p.getRole() == role).toList();
+  }
+
   public boolean kickPlayer(GamePlayer player) {
     if (PlayerUtils.contains(players, player)) {
-      players.remove(player);
-      eventBus.postGameExit(this, player);
+      if (player.getRole() == GameRole.TROY) {
+        player.setRole(GameRole.ADMIN);
+        player.getPlayer().addPotionEffect(PotionEffectType.INVISIBILITY.createEffect(9999, 1));
+        player.getPlayer().addPotionEffect(PotionEffectType.BLINDNESS.createEffect(9999, 1));
+        player.getPlayer().setGameMode(GameMode.CREATIVE);
+      } else {
+        players.remove(player);
+        eventBus.postGameExit(this, player);
+      }
       return true;
     }
 
@@ -71,6 +88,10 @@ public class GameContext {
         .orElse(null);
   }
 
+  public void syncNameLowerThan(int level, GamePlayer target) {
+    syncName(p -> p.getRole().getLevel() <= level, target);
+  }
+
   public void syncName(GameRole role, GamePlayer target) {
     syncName(p -> p.getRole() == role, target);
   }
@@ -91,6 +112,11 @@ public class GameContext {
       ((CraftPlayer) target.getPlayer()).getHandle().connection.send(pkt);
     }
   }
+
+  public void syncNameLowerThan(GamePlayer player, int level) {
+    syncName(player, p -> p.getRole().getLevel() <= level);
+  }
+
 
   public void syncName(GamePlayer player, GameRole role) {
     syncName(player, p -> p.getRole() == role);

@@ -83,7 +83,7 @@ public class DalgonaGameContext extends GameContext {
     meta.displayName(Component.text("달고나").style(Style.style(NamedTextColor.YELLOW)));
 
     for (GamePlayer player : getPlayers()) {
-      if (player.getRole() == GameRole.USER) {
+      if (player.getRole().getLevel() <= GameRole.TROY.getLevel()) {
         player.getPlayer().getInventory().addItem(dalgonaItem);
       }
     }

@@ -38,7 +38,7 @@ public final class MGREventListener extends InteractableListener {
       return;
     }
     if (block.getState() instanceof Powerable) {
-      if (gamePlayer.getRole() == GameRole.USER &&
+      if (gamePlayer.getRole().getLevel() <= GameRole.TROY.getLevel() &&
           context.getGameStatus() == MGRGameStatus.CLOSING_ROOM) {
         event.setCancelled(true);
       }
@@ -63,8 +63,8 @@ public final class MGREventListener extends InteractableListener {
   public void onQuit(PlayerQuitEvent event) {
     Player player = event.getPlayer();
     GamePlayer gamePlayer;
-    if ((gamePlayer = context.getPlayer(player.getUniqueId())) != null) {
-      context.kickPlayer(gamePlayer);
+    if ((gamePlayer = game.getContext().getPlayer(player.getUniqueId())) != null) {
+      game.getContext().kickPlayer(gamePlayer);
     }
   }
 
