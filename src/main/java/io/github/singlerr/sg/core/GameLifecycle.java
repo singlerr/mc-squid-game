@@ -13,14 +13,15 @@ import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Deque;
 import java.util.HashMap;
-import java.util.UUID;
 import java.util.function.Consumer;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
+@Slf4j
 public final class GameLifecycle extends BukkitRunnable {
   private final GameRegistry games;
   private final GameSettingsRegistry gameSettings;
@@ -83,15 +84,16 @@ public final class GameLifecycle extends BukkitRunnable {
       Registry<Listener> minecraftListeners =
           initRegistry("minecraft_events", game::registerListener);
       registerEvents(minecraftListeners.values(), plugin);
+      log.info("Initializing game {}, {}", gameListeners.keys(), minecraftListeners.keys());
       GameEventBus eventBus = createEventBus(gameListeners);
-      GameSettings settings = game.getGameSetup().getSettings(gameSettings.getById(id));
+      GameSettings settings = game.getGameSetup().getSettings(null);
       GameContext context =
           game.createContext(prevGameContext, eventBus, GameStatus.START, settings);
       if (context == null) {
         context = new GameContext(new HashMap<>(), GameStatus.START, eventBus,
             settings);
       }
-      context.setId(UUID.fromString(id));
+      context.setId(id);
       currentGame = new GameInfo(id, game, context, eventBus, minecraftListeners);
       eventBus.postGameStart(context);
     }

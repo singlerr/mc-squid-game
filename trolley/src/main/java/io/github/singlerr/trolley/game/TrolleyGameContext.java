@@ -55,10 +55,10 @@ public final class TrolleyGameContext extends GameContext {
   }
 
   public void loadTrainEntities() {
-    for (Map.Entry<Integer, TrolleyGameSettings.Train> e : getGameSettings().getTrainEntities()
+    for (Map.Entry<Integer, Train> e : getGameSettings().getTrainEntities()
         .entrySet()) {
       int trainNum = e.getKey();
-      TrolleyGameSettings.Train t = e.getValue();
+      Train t = e.getValue();
       World world = Bukkit.getWorld(t.getEntity().getWorld());
       if (world != null) {
         Entity entity = world.getEntity(t.getEntity().getId());
@@ -160,7 +160,7 @@ public final class TrolleyGameContext extends GameContext {
 
   public void resetTrain(int num) {
     Entity e = trainEntities.get(num);
-    TrolleyGameSettings.Train t = getGameSettings().getTrainEntities().get(num);
+    Train t = getGameSettings().getTrainEntities().get(num);
     if (e != null && t != null) {
       e.teleport(t.getInitialLocation());
     }

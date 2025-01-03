@@ -3,6 +3,7 @@ package io.github.singlerr.sg.rlgl.game;
 import io.github.singlerr.sg.core.network.NetworkRegistry;
 import io.github.singlerr.sg.core.network.packets.PacketInitModel;
 import io.github.singlerr.sg.core.setup.GameSetupContext;
+import io.github.singlerr.sg.core.utils.EntitySerializable;
 import lombok.extern.slf4j.Slf4j;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
@@ -25,7 +26,6 @@ public class RLGLGameSetupContext extends GameSetupContext<RLGLGameSettings> {
     NetworkRegistry network =
         Bukkit.getServicesManager().getRegistration(NetworkRegistry.class).getProvider();
     network.getChannel().sendToAll(pkt);
-    getSettings().setYoungHeeId(armorStand.getUniqueId());
-    getSettings().setYoungHeeWorld(armorStand.getWorld().getName());
+    getSettings().setYoungHee(EntitySerializable.of(armorStand));
   }
 }

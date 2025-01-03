@@ -10,11 +10,15 @@ import io.github.singlerr.sg.core.events.GameEventListener;
 import io.github.singlerr.sg.core.registry.Registry;
 import io.github.singlerr.sg.core.setup.GameSettings;
 import java.util.HashMap;
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.bukkit.event.Listener;
 
+@Slf4j
 public final class IntermediaryGame implements Game {
 
   private final IntermediaryGameSetup setup = new IntermediaryGameSetup();
+  @Getter
   private IntermediaryGameContext context;
 
   @Override
@@ -24,11 +28,12 @@ public final class IntermediaryGame implements Game {
 
   @Override
   public void registerListener(Registry<Listener> registry) {
-    registry.register("intermediary_listener", new IntermediaryEventListener(context));
+    registry.register("intermediary_listener", new IntermediaryEventListener(this));
   }
 
   @Override
   public void registerGameListener(Registry<GameEventListener> registry) {
+    log.debug("Registered game event listener");
     registry.register("intermediary_game_listener", new IntermediaryGameEventListener());
   }
 

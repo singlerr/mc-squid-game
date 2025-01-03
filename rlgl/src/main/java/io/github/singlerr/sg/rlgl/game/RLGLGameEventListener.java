@@ -41,7 +41,7 @@ public class RLGLGameEventListener implements GameEventListener {
     RLGLGameSettings settings = ctx.getGameSettings();
     if (ctx.getYoungHee() != null) {
       PacketInitModel pkt =
-          new PacketInitModel(settings.getYoungHeeId(), ctx.getYoungHee().getEntityId(),
+          new PacketInitModel(settings.getYoungHee().getId(), ctx.getYoungHee().getEntityId(),
               settings.getFrontState(),
               settings.getModelLocation());
       NetworkRegistry network =
@@ -81,7 +81,6 @@ public class RLGLGameEventListener implements GameEventListener {
     RLGLGameSettings settings = (RLGLGameSettings) ctx.getSettings();
     long timeMillis = settings.getTime() * 1000L;
     if (timeIndicator != null) {
-
       long timeLeft = timeMillis - timePassed;
       timeIndicator.setProgress((double) timeLeft / (double) timeMillis);
       int totalSecs = (int) (timeLeft / 1000);
@@ -99,17 +98,17 @@ public class RLGLGameEventListener implements GameEventListener {
     RLGLGameContext ctx = (RLGLGameContext) context;
     RLGLGameSettings settings = (RLGLGameSettings) ctx.getSettings();
     ctx.setStartTime(System.currentTimeMillis());
-    if (ctx.getYoungHee() == null && settings.getYoungHeeWorld() != null &&
-        settings.getYoungHeeId() != null) {
-      World world = Bukkit.getWorld(settings.getYoungHeeWorld());
+    if (ctx.getYoungHee() == null && settings.getYoungHee().getWorld() != null &&
+        settings.getYoungHee().getId() != null) {
+      World world = Bukkit.getWorld(settings.getYoungHee().getWorld());
       if (world != null) {
-        Entity entity = world.getEntity(settings.getYoungHeeId());
+        Entity entity = world.getEntity(settings.getYoungHee().getId());
         if (entity instanceof ArmorStand armorStand) {
           armorStand.customName(Component.text(armorStand.getUniqueId().toString()));
           armorStand.setCustomNameVisible(true);
           ctx.setYoungHee(armorStand);
           PacketInitModel pkt =
-              new PacketInitModel(settings.getYoungHeeId(), armorStand.getEntityId(),
+              new PacketInitModel(settings.getYoungHee().getId(), armorStand.getEntityId(),
                   settings.getFrontState(),
                   settings.getModelLocation());
           NetworkRegistry network =

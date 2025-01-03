@@ -16,6 +16,7 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.inventory.EquipmentSlot;
 
 @RequiredArgsConstructor
 public final class MGREventListener extends InteractableListener {
@@ -28,6 +29,10 @@ public final class MGREventListener extends InteractableListener {
       return;
     }
 
+    if (event.getHand() != EquipmentSlot.HAND) {
+      return;
+    }
+
     Block block = event.getClickedBlock();
     if (block == null) {
       return;
@@ -37,14 +42,18 @@ public final class MGREventListener extends InteractableListener {
     if (gamePlayer == null) {
       return;
     }
-    if (block.getState() instanceof Powerable) {
+    if (block.getBlockData() instanceof Door door) {
+      if (gamePlayer.getRole() == GameRole.ADMIN) {
+        door.setOpen(!door.isOpen());
+        block.setBlockData(door);
+        block.getState().update(true);
+        return;
+      }
+    }
+    if (block.getBlockData() instanceof Powerable) {
       if (gamePlayer.getRole().getLevel() <= GameRole.TROY.getLevel() &&
           context.getGameStatus() == MGRGameStatus.CLOSING_ROOM) {
         event.setCancelled(true);
-      }
-    } else if (block.getState() instanceof Door door) {
-      if (gamePlayer.getRole() == GameRole.ADMIN) {
-        door.setOpen(!door.isOpen());
       }
     }
   }

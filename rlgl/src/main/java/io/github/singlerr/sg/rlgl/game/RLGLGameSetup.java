@@ -36,11 +36,9 @@ public class RLGLGameSetup implements GameSetup<RLGLGameSettings> {
 
   @Override
   public RLGLGameSettings getSettings(RLGLGameSettings data) {
-    if (data == null) {
-      return settings;
+    if (data != null) {
+      settings.copyFrom(data);
     }
-
-    settings.copyFrom(data);
     return settings;
   }
 

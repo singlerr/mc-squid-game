@@ -14,6 +14,7 @@ import org.bukkit.event.Listener;
 
 public final class RouletteGame implements Game {
 
+  private RouletteGameSetup setup = new RouletteGameSetup();
   @Getter
   private RouletteGameContext context;
 
@@ -35,7 +36,7 @@ public final class RouletteGame implements Game {
   @Override
   public <T extends GameSettings> GameSetup<T> getGameSetup() {
 
-    return null;
+    return (GameSetup<T>) setup;
   }
 
   @Override

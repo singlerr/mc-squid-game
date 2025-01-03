@@ -4,16 +4,15 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 import lombok.experimental.UtilityClass;
 
 @UtilityClass
 public class GameHistoryRecorder {
 
-  private final Map<UUID, GameHistory> games = Collections.synchronizedMap(new HashMap<>());
+  private final Map<String, GameHistory> games = Collections.synchronizedMap(new HashMap<>());
 
-  public void recordGame(UUID id, GameContext context) {
-    games.put(id, new GameHistory(id.toString(), context.getInitialPlayerSize(),
+  public void recordGame(String id, GameContext context) {
+    games.put(id, new GameHistory(id, context.getInitialPlayerSize(),
         context.getPlayerMap().size()));
   }
 

@@ -39,18 +39,12 @@ import org.bukkit.util.Vector;
 @Setter
 public final class MGRGameContext extends GameContext {
 
+  private final Interpolator interpolator;
   private MGRGameStatus gameStatus;
-
   private TaskScheduler scheduler;
-
   private TickableSoundPlayer soundPlayer;
-
   private long joiningStartedTime;
-
   private Entity pillar;
-
-  private Interpolator interpolator;
-
   private int playerCount;
 
   private SecureRandom random;
@@ -66,6 +60,7 @@ public final class MGRGameContext extends GameContext {
     this.scheduler = new TaskScheduler();
     this.random = new SecureRandom();
     this.barrierCache = new HashSet<>();
+    this.interpolator = new Interpolator();
   }
 
   public MGRGameSettings getGameSettings() {
@@ -76,31 +71,31 @@ public final class MGRGameContext extends GameContext {
     gameStatus = MGRGameStatus.PLAYING_MUSIC;
     this.playerCount = playerCount;
     int offset = random.nextInt(2) - 1;
-    float distPerTick = getGameSettings().getCurtainMoveDistance() /
-        (getGameSettings().getCurtainDelay() * 1000);
     setBarrier();
-    interpolator = new Interpolator((long) (getGameSettings().getCurtainDelay() * 1000), p -> {
-      if (pillar.getLocation().distance(getGameSettings().getPillarLocation()) < 1) {
+    Location origin = pillar.getLocation().clone();
+    interpolator.add((long) (getGameSettings().getCurtainDelay() * 1000), p -> {
+      if ((int) (pillar.getLocation().distance(getGameSettings().getPillarLocation())) <= 0) {
         return;
       }
-      pillar.setVelocity(new Vector(0, -distPerTick, 0));
+      float newY = getGameSettings().getCurtainMoveDistance() * p;
+      pillar.teleport(origin.clone().subtract(0, newY, 0));
     });
     scheduler.enqueue((long) (getGameSettings().getCurtainDelay() * 1000), () -> {
       SoundSet music = getGameSettings().getMusicSound();
-      long dur = (long) ((music.getDuration() - offset) * 1000L);
-      this.soundPlayer.enqueue(getPlayers(), music.getSound(), dur, () -> {
-        Bukkit.getServer().stopSound(SoundStop.named(Key.key(music.getSound())));
-        openCurtain();
-      });
+      this.soundPlayer.enqueue(getPlayers(), music.getSound(),
+          getGameSettings().getJoiningRoomTime() - offset, () -> {
+            Bukkit.getServer().stopSound(SoundStop.named(Key.key(music.getSound())));
+            openCurtain();
+          });
     });
   }
 
   public void openCurtain() {
     gameStatus = MGRGameStatus.OPENING_CURTAIN;
-    float distPerTick = getGameSettings().getCurtainMoveDistance() /
-        (getGameSettings().getCurtainDelay() * 1000);
-    interpolator = new Interpolator((long) (getGameSettings().getCurtainDelay() * 1000), p -> {
-      pillar.setVelocity(new Vector(0, distPerTick, 0));
+    Location origin = pillar.getLocation().clone();
+    interpolator.add((long) (getGameSettings().getCurtainDelay() * 1000), p -> {
+      float newY = getGameSettings().getCurtainMoveDistance() * p;
+      pillar.teleport(origin.clone().add(new Vector(0, newY, 0)));
     }); // move curtain entity upwards
     scheduler.enqueue((long) (getGameSettings().getCurtainDelay() * 1000L), () -> {
       SoundSet set = getGameSettings().getAnnouncerSounds().get(playerCount);
@@ -109,7 +104,7 @@ public final class MGRGameContext extends GameContext {
         return;
       }
       startJoiningRoom();
-      this.soundPlayer.enqueue(getPlayers(), set.getSound(), (long) (set.getDuration() * 1000L),
+      this.soundPlayer.enqueue(getPlayers(), set.getSound(), set.getDuration(),
           this::startClosingRoom);
     });
   }
@@ -142,7 +137,7 @@ public final class MGRGameContext extends GameContext {
   public void closeSession() {
     float distPerTick = getGameSettings().getCurtainMoveDistance() /
         (getGameSettings().getCurtainDelay() * 1000);
-    interpolator = new Interpolator((long) (getGameSettings().getCurtainDelay() * 1000), p -> {
+    interpolator.add((long) (getGameSettings().getCurtainDelay() * 1000), p -> {
       if (pillar.getLocation().distance(getGameSettings().getPillarLocation()) < 1) {
         return;
       }
@@ -157,7 +152,7 @@ public final class MGRGameContext extends GameContext {
   public void setBarrier() {
     if (barrierCache.isEmpty()) {
       barrierCache = createBarrier(getPillar().getLocation(),
-          (int) getGameSettings().getCurtainMoveDistance());
+          (int) getGameSettings().getCurtainMoveDistance(), getGameSettings().getCurtainRadius());
     }
     for (Location l : barrierCache) {
       l.getBlock().setType(Material.BARRIER);
@@ -167,20 +162,20 @@ public final class MGRGameContext extends GameContext {
   public void removeBarrier() {
     if (barrierCache.isEmpty()) {
       barrierCache = createBarrier(getPillar().getLocation(),
-          (int) getGameSettings().getCurtainMoveDistance());
+          (int) getGameSettings().getCurtainMoveDistance(), getGameSettings().getCurtainRadius());
     }
     for (Location l : barrierCache) {
       l.getBlock().setType(Material.AIR);
     }
   }
 
-  private Set<Location> createBarrier(Location center, int height) {
+  private Set<Location> createBarrier(Location center, int height, float radius) {
     Set<Location> lower = new HashSet<>();
     for (int i = 0; i < 360; i++) {
       float angle = (float) Math.toRadians(i);
-      float x = center.getBlockX() + (float) Math.cos(angle);
+      float x = center.getBlockX() + (float) Math.cos(angle) * radius;
       float y = center.getBlockY();
-      float z = center.getBlockZ() + (float) Math.sin(angle);
+      float z = center.getBlockZ() + (float) Math.sin(angle) * radius;
 
       lower.add(new Location(center.getWorld(), x, y, z));
     }

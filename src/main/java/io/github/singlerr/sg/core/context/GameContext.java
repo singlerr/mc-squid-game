@@ -32,7 +32,7 @@ public class GameContext {
   private GameStatus status;
   @Getter
   @Setter
-  private UUID id;
+  private String id;
 
   public GameContext(Map<UUID, GamePlayer> players, GameStatus status, GameEventBus eventBus,
                      GameSettings settings) {
@@ -123,6 +123,8 @@ public class GameContext {
     if (!target.available()) {
       return;
     }
+    boolean admin = target.getRole().getLevel() >= GameRole.ADMIN.getLevel();
+
     for (GamePlayer player : players) {
       if (!player.available()) {
         continue;
@@ -132,7 +134,9 @@ public class GameContext {
           ClientboundPlayerInfoUpdatePacket.Action.UPDATE_DISPLAY_NAME),
           new ClientboundPlayerInfoUpdatePacket.Entry(handle.getUUID(), handle.getGameProfile(),
               true, handle.connection.latency(), handle.gameMode.getGameModeForPlayer(),
-              net.minecraft.network.chat.Component.literal(player.getAdminDisplayName().toString()),
+              net.minecraft.network.chat.Component.literal(
+                  admin ? player.getAdminDisplayName().toString() :
+                      player.getUserDisplayName().toString()),
               Optionull.map(handle.getChatSession(), RemoteChatSession::asData)));
       ((CraftPlayer) target.getPlayer()).getHandle().connection.send(pkt);
     }
@@ -156,16 +160,22 @@ public class GameContext {
       return;
     }
     ServerPlayer handle = ((CraftPlayer) player.getPlayer()).getHandle();
-    ClientboundPlayerInfoUpdatePacket pkt = new ClientboundPlayerInfoUpdatePacket(EnumSet.of(
-        ClientboundPlayerInfoUpdatePacket.Action.UPDATE_DISPLAY_NAME),
-        new ClientboundPlayerInfoUpdatePacket.Entry(handle.getUUID(), handle.getGameProfile(), true,
-            handle.connection.latency(), handle.gameMode.getGameModeForPlayer(),
-            net.minecraft.network.chat.Component.literal(player.getAdminDisplayName().toString()),
-            Optionull.map(handle.getChatSession(), RemoteChatSession::asData)));
     for (GamePlayer target : targets) {
       if (!target.available()) {
         continue;
       }
+      ClientboundPlayerInfoUpdatePacket pkt = new ClientboundPlayerInfoUpdatePacket(EnumSet.of(
+          ClientboundPlayerInfoUpdatePacket.Action.UPDATE_DISPLAY_NAME,
+          ClientboundPlayerInfoUpdatePacket.Action.UPDATE_LATENCY,
+          ClientboundPlayerInfoUpdatePacket.Action.UPDATE_LISTED),
+          new ClientboundPlayerInfoUpdatePacket.Entry(handle.getUUID(), handle.getGameProfile(),
+              true,
+              handle.connection.latency(), handle.gameMode.getGameModeForPlayer(),
+              net.minecraft.network.chat.Component.literal(
+                  target.getRole().getLevel() >= GameRole.ADMIN.getLevel() ?
+                      player.getAdminDisplayName().toString() :
+                      player.getUserDisplayName().toString()),
+              Optionull.map(handle.getChatSession(), RemoteChatSession::asData)));
       ((CraftPlayer) target.getPlayer()).getHandle().connection.send(pkt);
     }
   }

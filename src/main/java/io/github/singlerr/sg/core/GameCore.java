@@ -13,13 +13,16 @@ import io.github.singlerr.sg.core.registry.impl.RegistryFactory;
 import io.github.singlerr.sg.core.setup.GameSettings;
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
+import java.util.function.Supplier;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.bukkit.Bukkit;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitRunnable;
 
 @Slf4j
 public final class GameCore extends JavaPlugin {
@@ -40,9 +43,20 @@ public final class GameCore extends JavaPlugin {
 
   @Override
   public void onEnable() {
-    loadSettings();
+    log.info("Waiting for all other plugins fully loaded");
+    Watcher watcher = new Watcher(this::allPluginsEnabled, this::load);
+    watcher.runTaskTimer(instance, 0L, 1L);
+  }
+
+  private boolean allPluginsEnabled() {
+    return Arrays.stream(getServer().getPluginManager().getPlugins())
+        .allMatch(p -> getServer().getPluginManager().isPluginEnabled(p));
+  }
+
+  private void load() {
     this.setupManager = new GameSetupManager(gameRegistry);
     setup(gameRegistry);
+    loadSettings();
     log.info("Loaded following games: {}", gameRegistry.keys());
     this.coreLifecycle =
         new GameLifecycle(gameRegistry, settingsStorage.getLoadedSettings(), instance);
@@ -55,6 +69,9 @@ public final class GameCore extends JavaPlugin {
   @Override
   public void onDisable() {
     try {
+      if (!getDataFolder().exists()) {
+        getDataFolder().mkdir();
+      }
       settingsStorage.save();
     } catch (IOException e) {
       throw new RuntimeException(e);
@@ -85,7 +102,8 @@ public final class GameCore extends JavaPlugin {
   }
 
   private void registerCommands() {
-    GameCommands gameCmd = new GameCommands(coreLifecycle, gameRegistry, setupManager);
+    GameCommands gameCmd =
+        new GameCommands(coreLifecycle, gameRegistry, setupManager, settingsStorage);
     getCommand("sg").setExecutor(gameCmd);
     getCommand("sg").setTabCompleter(gameCmd);
   }
@@ -143,5 +161,25 @@ public final class GameCore extends JavaPlugin {
 
   public List<String> getPlayerSkinUrl() {
     return getConfig().getStringList("player_skin_url");
+  }
+
+  private static class Watcher extends BukkitRunnable {
+
+    private final Supplier<Boolean> predicate;
+    private final Runnable callback;
+
+    private Watcher(Supplier<Boolean> predicate, Runnable callback) {
+      this.predicate = predicate;
+      this.callback = callback;
+    }
+
+    @Override
+    public void run() {
+      if (predicate.get()) {
+        cancel();
+        callback.run();
+        return;
+      }
+    }
   }
 }

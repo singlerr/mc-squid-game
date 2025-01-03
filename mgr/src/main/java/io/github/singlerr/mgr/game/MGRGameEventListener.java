@@ -5,8 +5,8 @@ import io.github.singlerr.sg.core.context.GamePlayer;
 import io.github.singlerr.sg.core.context.GameRole;
 import io.github.singlerr.sg.core.events.GameEventListener;
 import io.github.singlerr.sg.core.utils.EntitySerializable;
-import io.github.singlerr.sg.core.utils.Interpolator;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.Style;
@@ -20,6 +20,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.slf4j.helpers.MessageFormatter;
 
+@Slf4j
 @RequiredArgsConstructor
 public final class MGRGameEventListener implements GameEventListener {
 
@@ -51,23 +52,17 @@ public final class MGRGameEventListener implements GameEventListener {
 
   @Override
   public void onTick(GameContext context) {
+    long currentTime = System.currentTimeMillis();
     MGRGameContext gameContext = (MGRGameContext) context;
+    log.info("현재 상태: {}", gameContext.getGameStatus());
     MGRGameSettings settings = (MGRGameSettings) gameContext.getSettings();
     gameContext.getSoundPlayer().tick();
     gameContext.getScheduler().tick();
-    Interpolator interpolator = gameContext.getInterpolator();
-    if (interpolator != null) {
-      if (interpolator.end()) {
-        gameContext.setInterpolator(null);
-      } else {
-        interpolator.tick();
-      }
-    }
+    gameContext.getInterpolator().tick(currentTime);
     if (gameContext.getGameStatus() == MGRGameStatus.IDLE) {
       return;
     }
 
-    long currentTime = System.currentTimeMillis();
     if (gameContext.getGameStatus() == MGRGameStatus.JOINING_ROOM) {
       long timePassed = currentTime - gameContext.getJoiningStartedTime();
       long joiningRoomTime = (long) (settings.getJoiningRoomTime() * 1000L);
@@ -96,6 +91,9 @@ public final class MGRGameEventListener implements GameEventListener {
       if (w != null) {
         Entity e = w.getEntity(settings.getPillarEntity().getId());
         ((MGRGameContext) context).setPillar(e);
+        if (e != null) {
+          e.setGravity(false);
+        }
       }
     }
   }
@@ -116,6 +114,7 @@ public final class MGRGameEventListener implements GameEventListener {
           context.beginPillarSetup(player.getUniqueId(), (e) -> {
             context.getSettings()
                 .setPillarEntity(new EntitySerializable(e.getWorld().getName(), e.getUniqueId()));
+            context.getSettings().setPillarLocation(e.getLocation());
           });
           infoCallback(sender, "이제 블레이즈 막대를 이용해 엔티티를 지정하세요.");
         } else if (type.equalsIgnoreCase("door")) {
@@ -160,6 +159,9 @@ public final class MGRGameEventListener implements GameEventListener {
         } catch (NumberFormatException e) {
           errorCallback(sender, "자연수를 입력하세요.");
         }
+      } else if (args[0].equalsIgnoreCase("close")) {
+        game.getContext().closeSession();
+        infoCallback(sender, "게임 초기화");
       }
     }
   }

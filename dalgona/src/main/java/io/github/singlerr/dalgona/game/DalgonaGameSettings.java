@@ -11,9 +11,17 @@ public final class DalgonaGameSettings implements GameSettings {
 
   private Material dalgonaType = Material.YELLOW_CARPET;
 
-  private Map<String, String> dalgonaImages = new HashMap<>();
+  private Map<String, String> dalgonaImages;
 
   private float time = 3 * 60;
+
+  public DalgonaGameSettings() {
+    dalgonaImages = new HashMap<>();
+    dalgonaImages.put("umbrella", "images/umbrella.png");
+    dalgonaImages.put("circle", "images/circle.png");
+    dalgonaImages.put("star", "images/star.png");
+    dalgonaImages.put("triangle", "images/triangle.png");
+  }
 
   public void copy(DalgonaGameSettings o) {
     this.dalgonaType = o.dalgonaType;

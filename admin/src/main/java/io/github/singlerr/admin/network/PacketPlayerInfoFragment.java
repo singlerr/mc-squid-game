@@ -17,10 +17,12 @@ public final class PacketPlayerInfoFragment implements Packet {
 
   private String id;
   private List<GamePlayer> playerList;
+  private boolean last;
 
   @Override
   public void writePayload(FriendlyByteBuf buffer) {
     buffer.writeUtf(id);
+    buffer.writeBoolean(last);
     buffer.writeInt(playerList.size());
     for (GamePlayer p : playerList) {
       writeGamePlayer(p, buffer);

@@ -5,11 +5,13 @@ import io.github.singlerr.sg.core.context.GamePlayer;
 import io.github.singlerr.sg.core.context.GameRole;
 import io.github.singlerr.sg.core.events.GameEventListener;
 import io.github.singlerr.sg.core.utils.PlayerUtils;
+import lombok.extern.slf4j.Slf4j;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.Style;
 import org.bukkit.command.CommandSender;
 
+@Slf4j
 public final class IntermediaryGameEventListener implements GameEventListener {
 
   @Override

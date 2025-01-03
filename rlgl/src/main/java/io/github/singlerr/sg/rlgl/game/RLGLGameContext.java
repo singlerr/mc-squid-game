@@ -88,6 +88,13 @@ public final class RLGLGameContext extends GameContext {
   }
 
   public void greenLight(SoundSet set) {
+    for (UUID id : killTargets) {
+      GamePlayer p = getPlayer(id);
+      if (!p.available()) {
+        continue;
+      }
+      p.getPlayer().setGlowing(false);
+    }
     PacketAnimateTransformationModel pkt =
         new PacketAnimateTransformationModel(youngHee.getUniqueId(), youngHee.getEntityId(),
             new Animation(getGameSettings().getNodeIndex(), getGameSettings().getFrontState(),

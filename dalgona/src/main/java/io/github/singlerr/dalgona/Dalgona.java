@@ -24,7 +24,7 @@ public final class Dalgona extends JavaPlugin {
       throw new IllegalStateException("Game core does not exist!");
     }
     game = new DalgonaGame();
-    registry.getProvider().register("mgr", game);
+    registry.getProvider().register("dalgona", game);
     registerPackets(networkRegistry.getProvider());
   }
 

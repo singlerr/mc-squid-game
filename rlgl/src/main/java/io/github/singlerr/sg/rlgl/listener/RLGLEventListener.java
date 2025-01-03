@@ -8,6 +8,7 @@ import io.github.singlerr.sg.rlgl.game.RLGLGameContext;
 import io.github.singlerr.sg.rlgl.game.RLGLGameSettings;
 import io.github.singlerr.sg.rlgl.game.RLGLItemRole;
 import io.github.singlerr.sg.rlgl.game.RLGLStatus;
+import lombok.extern.slf4j.Slf4j;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.Style;
@@ -16,10 +17,10 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
-import org.slf4j.helpers.MessageFormatter;
 
+@Slf4j
 public final class RLGLEventListener extends InteractableListener {
 
   private final RLGLGame game;
@@ -38,7 +39,7 @@ public final class RLGLEventListener extends InteractableListener {
     if (!player.available()) {
       return;
     }
-    if (!player.shouldInteract()) {
+    if (player.getRole().getLevel() >= GameRole.ADMIN.getLevel()) {
       return;
     }
     if (game.getGameContext().getRlglStatus() != RLGLStatus.RED_LIGHT) {
@@ -54,15 +55,16 @@ public final class RLGLEventListener extends InteractableListener {
     float rotDist = (float) event.getFrom().getDirection().distance(event.getTo().getDirection());
     if (moveDist >= settings.getKillSwitch() || rotDist >= settings.getKillSwitch()) {
       game.getGameContext().getKillTargets().add(player.getPlayer().getUniqueId());
-      String msg = MessageFormatter.basicArrayFormat("플레이어 움직임 감지: {}",
-          game.getGameContext().getKillTargets().stream()
-              .map(i -> context.getPlayer(i).getAdminDisplayName().append(Component.text("-"))
-                  .append(Component.text(context.getPlayer(i).getPlayer().getName()))).toArray());
+      Component msg =
+          Component.text("플레이어 움직임 감지: [").append(game.getGameContext().getKillTargets().stream()
+                  .map(i -> game.getGameContext().getPlayer(i).getAdminDisplayName())
+                  .reduce((a, b) -> a.append(Component.text(",")).append(b)).get())
+              .append(Component.text("]"));
       player.getPlayer().setGlowing(true);
       for (GamePlayer gamePlayer : game.getGameContext().getPlayers()) {
         if (gamePlayer.getRole() == GameRole.ADMIN) {
           gamePlayer.getPlayer()
-              .sendMessage(Component.text(msg).style(Style.style(NamedTextColor.RED)));
+              .sendMessage(msg.style(Style.style(NamedTextColor.RED)));
         }
       }
     }
@@ -79,11 +81,11 @@ public final class RLGLEventListener extends InteractableListener {
 
 
   @EventHandler
-  public void onQuit(PlayerQuitEvent event) {
+  public void onJoin(PlayerJoinEvent event) {
     Player player = event.getPlayer();
     GamePlayer gamePlayer;
     if ((gamePlayer = game.getGameContext().getPlayer(player.getUniqueId())) != null) {
-      game.getGameContext().kickPlayer(gamePlayer);
+//      game.getGameContext().
     }
   }
 

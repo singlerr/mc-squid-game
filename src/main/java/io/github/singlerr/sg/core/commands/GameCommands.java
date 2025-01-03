@@ -1,11 +1,14 @@
 package io.github.singlerr.sg.core.commands;
 
 import io.github.singlerr.sg.core.Game;
+import io.github.singlerr.sg.core.GameCore;
 import io.github.singlerr.sg.core.GameLifecycle;
 import io.github.singlerr.sg.core.GameRegistry;
 import io.github.singlerr.sg.core.GameSetupManager;
+import io.github.singlerr.sg.core.GameStorage;
 import io.github.singlerr.sg.core.context.GamePlayer;
 import io.github.singlerr.sg.core.context.GameRole;
+import java.io.IOException;
 import java.util.List;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -25,11 +28,14 @@ public final class GameCommands implements CommandExecutor, TabCompleter {
   private final GameLifecycle gameLifecycle;
   private final GameRegistry games;
   private final GameSetupManager setupManager;
+  private final GameStorage storage;
 
-  public GameCommands(GameLifecycle lifecycle, GameRegistry games, GameSetupManager setupManager) {
+  public GameCommands(GameLifecycle lifecycle, GameRegistry games, GameSetupManager setupManager,
+                      GameStorage storage) {
     this.gameLifecycle = lifecycle;
     this.games = games;
     this.setupManager = setupManager;
+    this.storage = storage;
   }
 
   @Override
@@ -58,6 +64,15 @@ public final class GameCommands implements CommandExecutor, TabCompleter {
     if (subCmd.equalsIgnoreCase("list")) {
       gameListCommand(sender, args);
       return true;
+    } else if (subCmd.equalsIgnoreCase("save")) {
+      try {
+        if (!GameCore.getInstance().getDataFolder().exists()) {
+          GameCore.getInstance().getDataFolder().mkdir();
+        }
+        storage.save();
+      } catch (IOException ex) {
+        errorCallback(sender, "설정 저장에 실패했습니다");
+      }
     }
     return true;
   }

@@ -44,12 +44,14 @@ public final class MGRGameSetupListener extends InteractableListener {
       return;
     }
     executor.accept(event.getInteractionPoint());
+    context.endDoorSetup(p.getUniqueId());
     successCallback(p, "설정 완료");
   }
 
   @EventHandler
   public void selectPillar(PlayerInteractAtEntityEvent event) {
-    ItemStack item = event.getPlayer().getActiveItem();
+    ItemStack item =
+        event.getPlayer().getInventory().getItem(event.getPlayer().getActiveItemHand());
     if (item == null) {
       return;
     }
@@ -65,6 +67,7 @@ public final class MGRGameSetupListener extends InteractableListener {
     }
 
     executor.accept(event.getRightClicked());
+    context.endPillarSetup(p.getUniqueId());
     successCallback(p, "설정 완료");
     event.setCancelled(true);
   }
@@ -86,11 +89,11 @@ public final class MGRGameSetupListener extends InteractableListener {
       return;
     }
 
-    if (event.getInteractionPoint() == null) {
+    if (event.getClickedBlock() == null) {
       return;
     }
 
-    Location loc = event.getInteractionPoint();
+    Location loc = event.getClickedBlock().getLocation();
     Player player = event.getPlayer();
     switch (event.getAction()) {
       case LEFT_CLICK_BLOCK -> {
@@ -101,9 +104,6 @@ public final class MGRGameSetupListener extends InteractableListener {
         event.setCancelled(true);
       }
       case RIGHT_CLICK_BLOCK -> {
-        if (event.getItem() == null || event.getItem().getType() != Material.STICK) {
-          return;
-        }
         if (regionSelector.getBuilder()
             .setEnd(loc)) {
           context.getSettings().getRooms()

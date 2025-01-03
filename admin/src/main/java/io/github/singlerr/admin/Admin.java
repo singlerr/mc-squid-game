@@ -34,7 +34,7 @@ public final class Admin extends JavaPlugin {
       .registerTypeAdapter(Vector3f.class, new Vector3fTypeAdapter())
       .registerTypeAdapter(Quaternionf.class, new QuaternionfTypeAdapter()).create();
 
-  private File storageFile = new File(getDataFolder(), "entities.json");
+  private final File storageFile = new File(getDataFolder(), "entities.json");
 
   @Override
   public void onEnable() {
@@ -97,6 +97,9 @@ public final class Admin extends JavaPlugin {
 
     try (FileReader reader = new FileReader(storageFile)) {
       ModelStorage storage = GSON.fromJson(reader, ModelStorage.class);
+      if (storage == null) {
+        return;
+      }
       for (Map.Entry<UUID, EntityReference> e : storage.getEntities()
           .entrySet()) {
         ModelTrackers.addEntity(e.getKey(),

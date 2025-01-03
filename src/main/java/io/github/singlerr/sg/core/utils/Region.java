@@ -12,8 +12,17 @@ public class Region {
   private Location end;
 
   public boolean isIn(Location location) {
-    return start.getX() <= location.getX() && start.getY() <= location.getY() &&
-        start.getZ() <= location.getZ() && location.getX() <= end.getX() &&
-        location.getY() <= end.getY() && location.getZ() <= end.getZ();
+    return contains(location.x(), location.y(), location.z());
   }
+
+  public boolean contains(double x, double y, double z) {
+    double x1 = Math.min(start.x(), end.x());
+    double x2 = Math.max(start.x(), end.x());
+    double y1 = Math.min(start.y(), end.y());
+    double y2 = Math.max(start.y(), end.y());
+    double z1 = Math.min(start.z(), end.z());
+    double z2 = Math.max(start.z(), end.z());
+    return x >= x1 && x <= x2 && y >= y1 && y <= y2 && z >= z1 && z <= z2;
+  }
+
 }

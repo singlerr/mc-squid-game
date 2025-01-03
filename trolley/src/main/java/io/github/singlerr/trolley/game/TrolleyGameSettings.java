@@ -1,14 +1,11 @@
 package io.github.singlerr.trolley.game;
 
 import io.github.singlerr.sg.core.setup.GameSettings;
-import io.github.singlerr.sg.core.utils.EntitySerializable;
 import io.github.singlerr.sg.core.utils.Region;
 import io.github.singlerr.sg.core.utils.SoundSet;
 import java.util.HashMap;
 import java.util.Map;
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import org.bukkit.Location;
 
 @Data
 public final class TrolleyGameSettings implements GameSettings {
@@ -47,12 +44,4 @@ public final class TrolleyGameSettings implements GameSettings {
     slowedSpeed = o.slowedSpeed;
   }
 
-  @Data
-  @AllArgsConstructor
-  public static class Train {
-
-    private Location initialLocation;
-    private EntitySerializable entity;
-
-  }
 }

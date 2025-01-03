@@ -136,7 +136,17 @@ public final class GameStorage {
   }
 
   public void save() throws IOException {
-    JsonObject obj = serialize(loadedSettings);
+    GameSettingsRegistry registry = DefaultGameSettingsRegistry.create();
+    if (games.values().isEmpty()) {
+      return;
+    }
+
+    for (String key : games.keys()) {
+      Game game = games.getById(key);
+      GameSettings settings = game.getGameSetup().getSettings(null);
+      registry.register(key, settings);
+    }
+    JsonObject obj = serialize(registry);
     try (FileWriter writer = new FileWriter(file)) {
       gson.toJson(obj, writer);
     }

@@ -69,7 +69,7 @@ public final class TrolleyGameSetupContext extends GameSetupContext<TrolleyGameS
 
   public void setTrainEntity(int trainNum, Entity entity) {
     getSettings().getTrainEntities().put(trainNum,
-        new TrolleyGameSettings.Train(entity.getLocation(), EntitySerializable.of(entity)));
+        new Train(entity.getLocation(), EntitySerializable.of(entity)));
   }
 
   private record Track(int trackNumber, RegionBuilder builder) {
