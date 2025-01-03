@@ -13,11 +13,11 @@ public final class PacketIntermissionResult implements Packet {
 
   @Override
   public void writePayload(FriendlyByteBuf buffer) {
-
+    buffer.writeBoolean(success);
   }
 
   @Override
   public void readPayload(FriendlyByteBuf buffer) {
-
+    success = buffer.readBoolean();
   }
 }

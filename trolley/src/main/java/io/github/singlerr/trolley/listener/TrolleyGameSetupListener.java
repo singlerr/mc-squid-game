@@ -110,7 +110,8 @@ public final class TrolleyGameSetupListener extends InteractableListener {
 
   @EventHandler
   public void onInteractEntity(PlayerInteractAtEntityEvent event) {
-    ItemStack item = event.getPlayer().getActiveItem();
+    ItemStack item =
+        event.getPlayer().getInventory().getItem(event.getPlayer().getActiveItemHand());
     if (item == null) {
       return;
     }

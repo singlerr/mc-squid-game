@@ -15,7 +15,6 @@ public final class TrainEntity {
   private final Location endPoint;
   private final Vector direction;
   private final Entity entity;
-  private final float coefficient;
   private final long duration;
   private final float radius;
   private boolean end;
@@ -29,11 +28,9 @@ public final class TrainEntity {
     this.entity = entity;
     this.startPoint = railway.getStart().clone();
     this.endPoint = railway.getEnd().clone();
-    this.direction = this.startPoint.toVector().subtract(this.endPoint.toVector()).normalize();
+    this.direction = this.endPoint.toVector().subtract(this.startPoint.toVector());
     this.duration = duration;
     this.radius = radius;
-    double distance = this.startPoint.distance(this.endPoint);
-    this.coefficient = (float) distance / (float) (duration / 1000L);
     this.end = false;
     this.started = false;
   }
@@ -58,8 +55,10 @@ public final class TrainEntity {
       return;
     }
 
-    double d = endPoint.distance(entity.getLocation());
-    if (d <= coefficient) {
+    float p = (float) timePassed / (float) duration;
+
+    int d = (int) endPoint.distance(entity.getLocation());
+    if (d <= 0) {
       end = true;
       return;
     }
@@ -70,7 +69,7 @@ public final class TrainEntity {
         .toList();
     players.forEach(e -> ((Player) e).setHealth(0));
 
-    entity.setVelocity(direction.multiply(coefficient));
+    entity.teleport(startPoint.clone().add(direction.clone().setY(0).multiply(p)));
   }
 
   public boolean end() {

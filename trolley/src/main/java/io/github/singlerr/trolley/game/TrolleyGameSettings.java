@@ -19,7 +19,7 @@ public final class TrolleyGameSettings implements GameSettings {
   private float slowedDuration = 1.5f;
   private float intermissionDuration = 1f;
   private float intermissionAngleRange = 90f;
-  private float intermissionAngleAmount = 30f;
+  private float intermissionAngleAmount = 45f;
 
   private float idleDuration = 1.5f;
   private float killRadius = 3f;

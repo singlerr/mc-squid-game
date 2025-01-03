@@ -3,10 +3,14 @@ package io.github.singlerr.trolley.game;
 import io.github.singlerr.sg.core.context.GamePlayer;
 import io.github.singlerr.sg.core.utils.Region;
 import io.github.singlerr.trolley.network.PacketIntermissionResult;
+import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public final class Ticker {
 
   private final StatusSwitch SLOWED;
@@ -37,12 +41,16 @@ public final class Ticker {
     this.slowedSpeed = slowedSpeed;
     this.idleSpeed = idleSpeed;
 
+    this.nextStatus = new ArrayDeque<>();
     this.SLOWED =
-        new StatusSwitch(PlayerTrolleyStatus.INTERMISSION, this::requestIntermission, slowedTime);
-    this.INTERMISSION = new StatusSwitch(PlayerTrolleyStatus.SLOWED, this::intermissionFailed,
+        new StatusSwitch(PlayerTrolleyStatus.INTERMISSION, () -> this::requestIntermission,
+            slowedTime);
+    this.INTERMISSION = new StatusSwitch(PlayerTrolleyStatus.SLOWED, () -> this::intermissionFailed,
         intermissionLimitTime);
-    this.MISSION_FAILED = new StatusSwitch(PlayerTrolleyStatus.SLOWED, this::slowed, idleTime);
-    this.MISSION_SUCCEEDED = new StatusSwitch(PlayerTrolleyStatus.IDLE, this::slowed, idleTime);
+    this.MISSION_FAILED =
+        new StatusSwitch(PlayerTrolleyStatus.SLOWED, () -> this::slowed, idleTime);
+    this.MISSION_SUCCEEDED =
+        new StatusSwitch(PlayerTrolleyStatus.IDLE, () -> this::slowed, idleTime);
   }
 
   private boolean shouldTick() {
@@ -66,7 +74,7 @@ public final class Ticker {
       return;
     }
     if (current.end(time)) {
-      current.getTask().accept(current);
+      current.getTask().get().accept(current);
       if (!nextStatus.isEmpty()) {
         current = nextStatus.removeFirst();
         current.setStartTime(time);
@@ -86,6 +94,7 @@ public final class Ticker {
 
   private void intermissionFailed(StatusSwitch self) {
     if (!self.isIntermission()) {
+      nextStatus.add(MISSION_FAILED.clone());
       return;
     }
     if (!player.available()) {
@@ -93,17 +102,18 @@ public final class Ticker {
     }
 
     player.getPlayer().setWalkSpeed(self.isIntermissionSuccess() ? idleSpeed : slowedSpeed);
+
+    StatusSwitch next =
+        self.isIntermissionSuccess() ? MISSION_SUCCEEDED.clone() : MISSION_FAILED.clone();
+    nextStatus.add(next);
   }
 
   public void handleIntermissionResult(PacketIntermissionResult result) {
     if (!current.isIntermission()) {
       return;
     }
-
     current.setEnd(true);
     current.setIntermissionSuccess(result.isSuccess());
-    StatusSwitch next = result.isSuccess() ? MISSION_SUCCEEDED.clone() : MISSION_FAILED.clone();
-    nextStatus.add(next);
   }
 
   private void requestIntermission(StatusSwitch self) {
@@ -112,7 +122,9 @@ public final class Ticker {
       return;
     }
     context.sendIntermissionRequest(player.getPlayer());
-    nextStatus.add(INTERMISSION.clone());
+    StatusSwitch next = INTERMISSION.clone();
+    next.setIntermission(true);
+    nextStatus.add(next);
   }
 
 
@@ -125,7 +137,7 @@ public final class Ticker {
   private static class StatusSwitch implements Cloneable {
 
     private final PlayerTrolleyStatus nextStatus;
-    private final Consumer<StatusSwitch> task;
+    private final Supplier<Consumer<StatusSwitch>> task;
     private final long delay;
     private long startTime;
 
@@ -134,13 +146,15 @@ public final class Ticker {
     // end for killing this job earlier than expected
     private boolean end = false;
 
-    public StatusSwitch(PlayerTrolleyStatus nextStatus, Consumer<StatusSwitch> task, long delay) {
+    public StatusSwitch(PlayerTrolleyStatus nextStatus, Supplier<Consumer<StatusSwitch>> task,
+                        long delay) {
       this.nextStatus = nextStatus;
       this.task = task;
       this.delay = delay;
     }
 
-    public StatusSwitch(PlayerTrolleyStatus nextStatus, Consumer<StatusSwitch> task, long delay,
+    public StatusSwitch(PlayerTrolleyStatus nextStatus, Supplier<Consumer<StatusSwitch>> task,
+                        long delay,
                         boolean intermission) {
       this.nextStatus = nextStatus;
       this.task = task;

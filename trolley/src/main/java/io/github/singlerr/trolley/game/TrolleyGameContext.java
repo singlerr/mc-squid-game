@@ -70,7 +70,10 @@ public final class TrolleyGameContext extends GameContext {
     }
   }
 
-  public void startGame() {
+  public void startIntermissions() {
+    if (trainEntities.isEmpty()) {
+      loadTrainEntities();
+    }
     for (GamePlayer player : getPlayers(GameRole.TROY.getLevel())) {
       Ticker t = new Ticker(this, getGameSettings().getGameRegion(), player,
           getGameSettings().getIdleSpeed(),
@@ -97,7 +100,7 @@ public final class TrolleyGameContext extends GameContext {
   }
 
   public float randomAngle() {
-    int max = (int) (330 - getGameSettings().getIntermissionAngleAmount() -
+    int max = (int) (270 - getGameSettings().getIntermissionAngleAmount() -
         getGameSettings().getIntermissionAngleRange());
     return (float) random.nextInt(max) + getGameSettings().getIntermissionAngleRange();
   }
@@ -131,7 +134,7 @@ public final class TrolleyGameContext extends GameContext {
       return false;
     }
 
-    soundPlayer.enqueue(getPlayers(GameRole.TROY.getLevel()),
+    soundPlayer.enqueue(getPlayers(),
         getGameSettings().getTrainSound().getSound(),
         getGameSettings().getTrainSound().getDuration(), () -> {
           runTrain(trackNum);
