@@ -95,6 +95,7 @@ public class DalgonaGameContext extends GameContext {
       if (player.getRole().getLevel() <= GameRole.TROY.getLevel()) {
         String dalgona = dalgonas.get(random.nextInt(dalgonas.size()));
         dalgonaImages.put(player.getPlayer().getUniqueId(), dalgona);
+        status.put(player.getId(), PlayerDalgonaStatus.IDLE);
         player.getPlayer().getInventory().addItem(dalgonaItem);
       }
     }
@@ -105,7 +106,6 @@ public class DalgonaGameContext extends GameContext {
       return;
     }
     String dalgonaImage = dalgonaImages.get(player.getUniqueId());
-    status.put(player.getUniqueId(), PlayerDalgonaStatus.IDLE);
     NetworkRegistry
         network = Bukkit.getServicesManager().getRegistration(NetworkRegistry.class).getProvider();
     network.getChannel().sendTo(player, new PacketDalgonaRequest(dalgonaImage));
