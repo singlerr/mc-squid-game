@@ -62,6 +62,8 @@ public final class DalgonaGameEventListener implements GameEventListener {
         timeIndicator.removeAll();
         timeIndicator = null;
       }
+
+      ctx.end();
     }
     if (timeIndicator != null) {
       int totalSecs = (int) (timeLeft / 1000);

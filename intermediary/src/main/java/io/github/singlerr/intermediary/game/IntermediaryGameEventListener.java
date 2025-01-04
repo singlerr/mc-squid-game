@@ -23,8 +23,10 @@ public final class IntermediaryGameEventListener implements GameEventListener {
     if (player.getRole().getLevel() <= GameRole.TROY.getLevel()) {
       context.syncName(player, GameRole.ADMIN);
       PlayerUtils.changeSkin(player.getPlayer(), GameRole.USER);
-    } else {
       context.syncNameLowerThan(GameRole.USER.getLevel(), player);
+      context.syncNameLowerThan(player, GameRole.USER.getLevel());
+    } else {
+
     }
   }
 

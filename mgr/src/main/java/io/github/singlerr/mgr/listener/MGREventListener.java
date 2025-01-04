@@ -15,7 +15,6 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.EquipmentSlot;
 
 @RequiredArgsConstructor
@@ -65,15 +64,6 @@ public final class MGREventListener extends InteractableListener {
     GamePlayer gamePlayer;
     if ((gamePlayer = context.getPlayer(player.getUniqueId())) != null) {
       context.kickPlayer(gamePlayer);
-    }
-  }
-
-  @EventHandler
-  public void onQuit(PlayerQuitEvent event) {
-    Player player = event.getPlayer();
-    GamePlayer gamePlayer;
-    if ((gamePlayer = game.getContext().getPlayer(player.getUniqueId())) != null) {
-      game.getContext().kickPlayer(gamePlayer);
     }
   }
 

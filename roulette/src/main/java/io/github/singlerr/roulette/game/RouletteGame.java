@@ -1,5 +1,6 @@
 package io.github.singlerr.roulette.game;
 
+import io.github.singlerr.roulette.listener.RouletteEventListener;
 import io.github.singlerr.sg.core.Game;
 import io.github.singlerr.sg.core.GameSetup;
 import io.github.singlerr.sg.core.context.GameContext;
@@ -25,12 +26,12 @@ public final class RouletteGame implements Game {
 
   @Override
   public void registerListener(Registry<Listener> registry) {
-
+    registry.register("roulette_event_listener", new RouletteEventListener(this));
   }
 
   @Override
   public void registerGameListener(Registry<GameEventListener> registry) {
-
+    registry.register("roulette_game_listener", new RouletteGameEventListener(this));
   }
 
   @Override

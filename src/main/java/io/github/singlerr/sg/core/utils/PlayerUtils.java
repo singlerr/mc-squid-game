@@ -56,7 +56,7 @@ public class PlayerUtils {
       PlayerStorage playerStorage = api.getPlayerStorage();
       playerStorage.setSkinIdOfPlayer(player.getUniqueId(), result.get().getIdentifier());
       api.getSkinApplier(Player.class).applySkin(player);
-      log.debug("Changed {} skin to {}", player.getName(), skinUrl);
+      log.info("Changed {} skin to {}", player.getName(), skinUrl);
     } catch (DataRequestException | MineSkinException e) {
       log.error("Failed to apply skin", e);
     }

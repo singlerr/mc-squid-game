@@ -73,7 +73,7 @@ public final class PacketRequestInfoHandler implements PacketHandler<PacketReque
     for (int i = 0; i < c; i++) {
       UUID id = UUID.randomUUID();
       players.add(new GamePlayer(id, null, GameRole.USER, Component.text(id.toString()),
-          Component.text(id.toString())));
+          Component.text(id.toString()), 0));
     }
     return players;
   }

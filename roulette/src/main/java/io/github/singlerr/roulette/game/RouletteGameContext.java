@@ -62,11 +62,27 @@ public final class RouletteGameContext extends GameContext {
         Gun.class);
   }
 
+  public void update(ItemStack stack, Gun gun) {
+    ItemMeta itemMeta = stack.getItemMeta();
+    itemMeta.getCustomTagContainer().setCustomTag(GUN_TAG, ItemTagType.STRING, GSON.toJson(gun));
+    itemMeta.displayName(Component.text(getGameSettings().getGunName()).style(Style.style(
+        NamedTextColor.RED)));
+    stack.setItemMeta(itemMeta);
+  }
+
   public void playReloadingAnimation(Player player) {
 
   }
 
   public void shot(Player player, Gun gun) {
+    if (gun.getBullets().isEmpty()) {
+      return;
+    }
 
+    boolean next = gun.getBullets().removeFirst();
+    if (next) {
+      // play gun sound
+      player.setHealth(0);
+    }
   }
 }

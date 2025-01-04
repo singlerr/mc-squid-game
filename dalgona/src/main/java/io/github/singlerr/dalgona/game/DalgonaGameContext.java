@@ -127,6 +127,7 @@ public class DalgonaGameContext extends GameContext {
 
     msg = msg.append(Component.text("]")).style(Style.style(NamedTextColor.YELLOW));
     broadcast(msg, GameRole.ADMIN);
+    setGameStatus(DalgonaGameStatus.IDLE);
   }
 
 }

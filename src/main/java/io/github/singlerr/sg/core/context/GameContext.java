@@ -1,9 +1,11 @@
 package io.github.singlerr.sg.core.context;
 
+import com.mojang.authlib.GameProfile;
 import io.github.singlerr.sg.core.setup.GameSettings;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Predicate;
@@ -98,9 +100,11 @@ public class GameContext {
   }
 
   public void assignNumberName(GamePlayer player) {
-    player.setUserDisplayName(Component.text(getPlayers().size()));
+    int num = getPlayers().size();
+    player.setUserDisplayName(Component.text(num));
     player.setAdminDisplayName(Component.text("[").append(player.getUserDisplayName())
         .append(Component.text("]").append(Component.text(player.getPlayer().getName()))));
+    player.setUserNumber(num);
   }
 
   public GamePlayer getPlayer(UUID playerId) {
@@ -130,13 +134,16 @@ public class GameContext {
         continue;
       }
       ServerPlayer handle = ((CraftPlayer) player.getPlayer()).getHandle();
+      String newName = admin ? player.getAdminDisplayName().toString() :
+          player.getUserDisplayName().toString();
+
+      GameProfile profile = new GameProfile(handle.getUUID(), newName);
       ClientboundPlayerInfoUpdatePacket pkt = new ClientboundPlayerInfoUpdatePacket(EnumSet.of(
-          ClientboundPlayerInfoUpdatePacket.Action.UPDATE_DISPLAY_NAME),
-          new ClientboundPlayerInfoUpdatePacket.Entry(handle.getUUID(), handle.getGameProfile(),
+          ClientboundPlayerInfoUpdatePacket.Action.UPDATE_DISPLAY_NAME,
+          ClientboundPlayerInfoUpdatePacket.Action.UPDATE_LISTED),
+          new ClientboundPlayerInfoUpdatePacket.Entry(handle.getUUID(), profile,
               true, handle.connection.latency(), handle.gameMode.getGameModeForPlayer(),
-              net.minecraft.network.chat.Component.literal(
-                  admin ? player.getAdminDisplayName().toString() :
-                      player.getUserDisplayName().toString()),
+              net.minecraft.network.chat.Component.literal(newName),
               Optionull.map(handle.getChatSession(), RemoteChatSession::asData)));
       ((CraftPlayer) target.getPlayer()).getHandle().connection.send(pkt);
     }
@@ -164,19 +171,26 @@ public class GameContext {
       if (!target.available()) {
         continue;
       }
-      ClientboundPlayerInfoUpdatePacket pkt = new ClientboundPlayerInfoUpdatePacket(EnumSet.of(
-          ClientboundPlayerInfoUpdatePacket.Action.UPDATE_DISPLAY_NAME,
-          ClientboundPlayerInfoUpdatePacket.Action.UPDATE_LATENCY,
-          ClientboundPlayerInfoUpdatePacket.Action.UPDATE_LISTED),
-          new ClientboundPlayerInfoUpdatePacket.Entry(handle.getUUID(), handle.getGameProfile(),
+      boolean admin = target.getRole().getLevel() >= GameRole.ADMIN.getLevel();
+      String newName = admin ? "[" + player.getUserNumber() + "]" + player.getPlayer().getName() :
+          String.valueOf(player.getUserNumber());
+
+      GameProfile profile = new GameProfile(handle.getUUID(), newName);
+      final EnumSet<ClientboundPlayerInfoUpdatePacket.Action> enumSet =
+          EnumSet.of(ClientboundPlayerInfoUpdatePacket.Action.ADD_PLAYER,
+              ClientboundPlayerInfoUpdatePacket.Action.INITIALIZE_CHAT,
+              ClientboundPlayerInfoUpdatePacket.Action.UPDATE_GAME_MODE,
+              ClientboundPlayerInfoUpdatePacket.Action.UPDATE_LISTED,
+              ClientboundPlayerInfoUpdatePacket.Action.UPDATE_LATENCY,
+              ClientboundPlayerInfoUpdatePacket.Action.UPDATE_DISPLAY_NAME);
+      final List<ClientboundPlayerInfoUpdatePacket.Entry> entry =
+          List.of(new ClientboundPlayerInfoUpdatePacket.Entry(handle.getUUID(), profile,
               true,
               handle.connection.latency(), handle.gameMode.getGameModeForPlayer(),
-              net.minecraft.network.chat.Component.literal(
-                  target.getRole().getLevel() >= GameRole.ADMIN.getLevel() ?
-                      player.getAdminDisplayName().toString() :
-                      player.getUserDisplayName().toString()),
+              net.minecraft.network.chat.Component.literal(newName),
               Optionull.map(handle.getChatSession(), RemoteChatSession::asData)));
-      ((CraftPlayer) target.getPlayer()).getHandle().connection.send(pkt);
+      ((CraftPlayer) target.getPlayer()).getHandle().connection.send(
+          new ClientboundPlayerInfoUpdatePacket(enumSet, entry));
     }
   }
 }

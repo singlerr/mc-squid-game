@@ -19,9 +19,11 @@ public class GamePlayer implements Comparable<GamePlayer> {
   private Component userDisplayName;
   private Component adminDisplayName;
 
+  private int userNumber;
+
   public GamePlayer(Player player, GameRole role) {
     this(player.getUniqueId(), player, role, Component.text(player.getName()),
-        Component.text(player.getName()));
+        Component.text(player.getName()), 0);
   }
 
   public static GamePlayer ofUser(Player player) {
