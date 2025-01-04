@@ -3,11 +3,13 @@ package io.github.singlerr.sg.rlgl.listener;
 import io.github.singlerr.sg.core.context.GamePlayer;
 import io.github.singlerr.sg.core.context.GameRole;
 import io.github.singlerr.sg.core.utils.InteractableListener;
+import io.github.singlerr.sg.core.utils.PlayerUtils;
 import io.github.singlerr.sg.rlgl.game.RLGLGame;
 import io.github.singlerr.sg.rlgl.game.RLGLGameContext;
 import io.github.singlerr.sg.rlgl.game.RLGLGameSettings;
 import io.github.singlerr.sg.rlgl.game.RLGLItemRole;
 import io.github.singlerr.sg.rlgl.game.RLGLStatus;
+import java.util.Collection;
 import lombok.extern.slf4j.Slf4j;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -60,12 +62,12 @@ public final class RLGLEventListener extends InteractableListener {
                   .map(i -> game.getGameContext().getPlayer(i).getAdminDisplayName())
                   .reduce((a, b) -> a.append(Component.text(",")).append(b)).get())
               .append(Component.text("]"));
-      player.getPlayer().setGlowing(true);
-      for (GamePlayer gamePlayer : game.getGameContext().getPlayers()) {
-        if (gamePlayer.getRole() == GameRole.ADMIN) {
-          gamePlayer.getPlayer()
-              .sendMessage(msg.style(Style.style(NamedTextColor.RED)));
-        }
+      Collection<GamePlayer> players = game.getGameContext().getPlayers(GameRole.ADMIN);
+      PlayerUtils.setGlowing(player.getPlayer(), players.stream().filter(GamePlayer::available).map(
+          GamePlayer::getPlayer).toList(), true);
+      for (GamePlayer gamePlayer : players) {
+        gamePlayer.getPlayer()
+            .sendMessage(msg.style(Style.style(NamedTextColor.RED)));
       }
     }
   }

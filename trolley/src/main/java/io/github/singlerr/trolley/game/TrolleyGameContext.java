@@ -7,6 +7,7 @@ import io.github.singlerr.sg.core.context.GameRole;
 import io.github.singlerr.sg.core.context.GameStatus;
 import io.github.singlerr.sg.core.network.NetworkRegistry;
 import io.github.singlerr.sg.core.setup.GameSettings;
+import io.github.singlerr.sg.core.utils.EntitySerializable;
 import io.github.singlerr.sg.core.utils.TaskScheduler;
 import io.github.singlerr.sg.core.utils.TickableSoundPlayer;
 import io.github.singlerr.trolley.network.PacketIntermissionRequest;
@@ -63,6 +64,12 @@ public final class TrolleyGameContext extends GameContext {
       if (world != null) {
         Entity entity = world.getEntity(t.getEntity().getId());
         if (entity != null) {
+          for (EntitySerializable p : t.getEntity().getPassengers()) {
+            Entity passenger = world.getEntity(p.getId());
+            if (passenger != null) {
+              entity.addPassenger(passenger);
+            }
+          }
           entity.teleport(t.getInitialLocation());
           trainEntities.put(trainNum, entity);
         }

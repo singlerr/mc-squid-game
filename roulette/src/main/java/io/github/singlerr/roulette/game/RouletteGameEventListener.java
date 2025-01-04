@@ -31,10 +31,10 @@ public final class RouletteGameEventListener implements GameEventListener {
   public void onExit(GameContext context, GamePlayer player) {
     for (GamePlayer p : context.getPlayers()) {
       if (p.getRole().getLevel() <= GameRole.TROY.getLevel()) {
-        p.sendMessage(p.getUserDisplayName().append(Component.text(" 탈락").style(Style.style(
+        p.sendMessage(player.getUserDisplayName().append(Component.text(" 탈락").style(Style.style(
             NamedTextColor.RED))));
       } else {
-        p.sendMessage(p.getAdminDisplayName().append(Component.text(" 탈락").style(Style.style(
+        p.sendMessage(player.getAdminDisplayName().append(Component.text(" 탈락").style(Style.style(
             NamedTextColor.RED))));
       }
     }
@@ -47,7 +47,13 @@ public final class RouletteGameEventListener implements GameEventListener {
 
   @Override
   public void onStart(GameContext context) {
-
+    RouletteGameContext ctx = (RouletteGameContext) context;
+    for (GamePlayer player : context.getPlayers()) {
+      if (!player.available()) {
+        continue;
+      }
+      ctx.createFakeArrow(player.getPlayer());
+    }
   }
 
   @Override
@@ -70,7 +76,6 @@ public final class RouletteGameEventListener implements GameEventListener {
         Gun gun = game.getContext().createGun(bulletAmount, realBulletAmount);
         ItemStack gunItem = game.getContext().createGun(gun);
         player.getInventory().addItem(gunItem);
-
         successCallback(sender, "리볼버가 지급되었습니다. 쉬프트 - 우클릭으로 리볼버 재장전이 가능합니다.");
       } catch (NumberFormatException e) {
         errorCallback(sender, "자연수를 입력하세요.");

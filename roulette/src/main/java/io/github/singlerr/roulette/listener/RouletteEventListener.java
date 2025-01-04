@@ -67,6 +67,7 @@ public final class RouletteEventListener extends InteractableListener {
     gun.reload(gun.getBulletAmount(), gun.getRealBulletAmount());
     game.getContext().update(item, gun);
     game.getContext().playReloadingAnimation(p.getPlayer());
+    event.setCancelled(true);
   }
 
   @EventHandler

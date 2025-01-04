@@ -118,8 +118,10 @@ public final class MGRGameContext extends GameContext {
   public void startClosingRoom() {
     gameStatus = MGRGameStatus.CLOSING_ROOM;
     for (Location loc : getGameSettings().getDoors().values()) {
-      if (loc.getBlock().getState() instanceof Door d) {
-        d.setOpen(false);
+      if (loc.getBlock().getState() instanceof Door door) {
+        door.setOpen(false);
+        loc.getBlock().setBlockData(door);
+        loc.getBlock().getState().update(true);
       }
     }
     for (Map.Entry<Integer, Region> entry : ((MGRGameSettings) getSettings()).getRooms()

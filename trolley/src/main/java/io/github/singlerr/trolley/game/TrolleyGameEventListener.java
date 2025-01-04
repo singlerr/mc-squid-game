@@ -26,10 +26,10 @@ public final class TrolleyGameEventListener implements GameEventListener {
   public void onExit(GameContext context, GamePlayer player) {
     for (GamePlayer p : context.getPlayers()) {
       if (p.getRole() == GameRole.USER) {
-        p.sendMessage(p.getUserDisplayName().append(Component.text(" 탈락").style(Style.style(
+        p.sendMessage(player.getUserDisplayName().append(Component.text(" 탈락").style(Style.style(
             NamedTextColor.RED))));
       } else {
-        p.sendMessage(p.getAdminDisplayName().append(Component.text(" 탈락").style(Style.style(
+        p.sendMessage(player.getAdminDisplayName().append(Component.text(" 탈락").style(Style.style(
             NamedTextColor.RED))));
       }
     }
@@ -58,7 +58,13 @@ public final class TrolleyGameEventListener implements GameEventListener {
 
   @Override
   public void onEnd(GameContext context) {
-
+    TrolleyGameContext ctx = (TrolleyGameContext) context;
+    for (GamePlayer player : ctx.getPlayers()) {
+      if (!player.available()) {
+        continue;
+      }
+      player.getPlayer().setWalkSpeed(ctx.getGameSettings().getIdleSpeed());
+    }
   }
 
   @Override

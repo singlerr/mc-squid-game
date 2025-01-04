@@ -9,6 +9,9 @@ import java.util.List;
 import java.util.Optional;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
+import net.minecraft.network.protocol.game.ClientboundUpdateMobEffectPacket;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.skinsrestorer.api.SkinsRestorer;
 import net.skinsrestorer.api.SkinsRestorerProvider;
 import net.skinsrestorer.api.exception.DataRequestException;
@@ -16,6 +19,7 @@ import net.skinsrestorer.api.exception.MineSkinException;
 import net.skinsrestorer.api.property.InputDataResult;
 import net.skinsrestorer.api.storage.PlayerStorage;
 import net.skinsrestorer.api.storage.SkinStorage;
+import org.bukkit.craftbukkit.v1_20_R3.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 
 @Slf4j
@@ -40,6 +44,15 @@ public class PlayerUtils {
       List<String> urls = GameCore.getInstance().getPlayerSkinUrl();
       int idx = random.nextInt(urls.size());
       changeSkin(player, urls.get(idx));
+    }
+  }
+
+  public void setGlowing(Player player, Collection<Player> listeners, boolean flag) {
+    ClientboundUpdateMobEffectPacket e =
+        new ClientboundUpdateMobEffectPacket(player.getEntityId(), new MobEffectInstance(
+            MobEffects.GLOWING, flag ? 9999 : 0));
+    for (Player listener : listeners) {
+      ((CraftPlayer) listener).getHandle().connection.send(e);
     }
   }
 

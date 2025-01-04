@@ -48,6 +48,7 @@ public final class TrolleyGameSetupListener extends InteractableListener {
         if (regionBuilder
             .setEnd(event.getClickedBlock().getLocation())) {
           setup.getContext().setGameRegion(regionBuilder.build());
+          setup.getContext().endGameRegion(player.getUniqueId());
           successCallback(player, "End point set: {}", event.getClickedBlock().getLocation());
           successCallback(player, "Successfully created game region");
         } else {
@@ -72,7 +73,6 @@ public final class TrolleyGameSetupListener extends InteractableListener {
     if (event.getItem().getType() != Material.WOODEN_AXE) {
       return;
     }
-
     if (setup.getContext().getTrackNumber(event.getPlayer().getUniqueId()) == null ||
         setup.getContext().getRegionBuilder(event.getPlayer().getUniqueId()) == null) {
       return;
@@ -95,6 +95,7 @@ public final class TrolleyGameSetupListener extends InteractableListener {
         if (regionBuilder
             .setEnd(event.getClickedBlock().getLocation())) {
           setup.getContext().setTrainTrack(trackNum, regionBuilder.build());
+          setup.getContext().endTrack(player.getUniqueId());
           successCallback(player, "End point set: {}", event.getClickedBlock().getLocation());
           successCallback(player, "Successfully created track");
         } else {
@@ -125,7 +126,7 @@ public final class TrolleyGameSetupListener extends InteractableListener {
 
     int trackNum = setup.getContext().getTrackNumber(event.getPlayer().getUniqueId());
     setup.getContext().setTrainEntity(trackNum, event.getRightClicked());
-
+    setup.getContext().endTrack(event.getPlayer().getUniqueId());
     successCallback(event.getPlayer(), "Train entity set : {}", trackNum);
     event.setCancelled(true);
   }

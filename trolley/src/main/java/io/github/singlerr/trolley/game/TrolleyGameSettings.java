@@ -17,17 +17,17 @@ public final class TrolleyGameSettings implements GameSettings {
 
   private float duration = 6f;
   private float slowedDuration = 1.5f;
-  private float intermissionDuration = 1f;
+  private float intermissionDuration = 2f;
   private float intermissionAngleRange = 90f;
   private float intermissionAngleAmount = 45f;
 
   private float idleDuration = 1.5f;
   private float killRadius = 3f;
 
-  private float idleSpeed = 0.2f;
+  private float idleSpeed = 0.1f;
   private float slowedSpeed = 0.01f;
 
-  private SoundSet trainSound = new SoundSet("trolley.train", 19f);
+  private SoundSet trainSound = new SoundSet("trolley.train", 18f);
 
   public void copy(TrolleyGameSettings o) {
     trainEntities = new HashMap<>(o.trainEntities);

@@ -19,23 +19,23 @@ public enum RLGLItemRole {
   END(Component.literal("[게임 종료]").withStyle(ChatFormatting.YELLOW), (ctx, player) -> {
     ctx.end();
   }),
-  GREEN_LIGHT_1(Component.literal("[빨간불 - 2s]").withStyle(ChatFormatting.RED),
+  GREEN_LIGHT_1(Component.literal("[빨간불 - 1]").withStyle(ChatFormatting.RED),
       (ctx, player) -> {
         ctx.greenLight(ctx.getGameSettings().getSoundOne());
       }),
-  GREEN_LIGHT_2(Component.literal("[빨간불 - 3s]").withStyle(ChatFormatting.RED),
+  GREEN_LIGHT_2(Component.literal("[빨간불 - 2]").withStyle(ChatFormatting.RED),
       (ctx, player) -> {
         ctx.greenLight(ctx.getGameSettings().getSoundTwo());
       }),
-  GREEN_LIGHT_3(Component.literal("[빨간불 - 4s]").withStyle(ChatFormatting.RED),
+  GREEN_LIGHT_3(Component.literal("[빨간불 - 3]").withStyle(ChatFormatting.RED),
       (ctx, player) -> {
         ctx.greenLight(ctx.getGameSettings().getSoundThree());
       }),
-  GREEN_LIGHT_4(Component.literal("[빨간불 - 5s]").withStyle(ChatFormatting.RED),
+  GREEN_LIGHT_4(Component.literal("[빨간불 - 4]").withStyle(ChatFormatting.RED),
       (ctx, player) -> {
         ctx.greenLight(ctx.getGameSettings().getSoundFour());
       }),
-  GREEN_LIGHT_5(Component.literal("[빨간불 - 8s]").withStyle(ChatFormatting.RED),
+  GREEN_LIGHT_5(Component.literal("[빨간불 - 5]").withStyle(ChatFormatting.RED),
       (ctx, player) -> {
         ctx.greenLight(ctx.getGameSettings().getSoundFive());
       });

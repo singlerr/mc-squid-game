@@ -3,11 +3,16 @@ package io.github.singlerr.trolley.game;
 import io.github.singlerr.sg.core.context.GameRole;
 import io.github.singlerr.sg.core.utils.Region;
 import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 import org.bukkit.Location;
+import org.bukkit.entity.Display;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
+import org.bukkit.util.Transformation;
 import org.bukkit.util.Vector;
+import org.joml.Vector3f;
 
+@Slf4j
 public final class TrainEntity {
 
   private final TrolleyGameContext context;
@@ -47,6 +52,16 @@ public final class TrainEntity {
     if (!started) {
       startTime = time;
       started = true;
+      for (Entity passenger : entity.getPassengers()) {
+        if (passenger instanceof Display display) {
+          Transformation t = display.getTransformation();
+          display.setInterpolationDelay(0);
+          display.setInterpolationDuration((int) ((duration / 1000) * 20));
+          t.getTranslation().add(new Vector3f((float) direction.getX(), (float) direction.getY(),
+              (float) direction.getZ()));
+          display.setTransformation(t);
+        }
+      }
     }
 
     long timePassed = time - startTime;
@@ -62,14 +77,13 @@ public final class TrainEntity {
       end = true;
       return;
     }
-
     List<Entity> players = entity.getNearbyEntities(radius, radius, radius).stream().filter(
             e -> context.getPlayer(e.getUniqueId()) != null &&
                 context.getPlayer(e.getUniqueId()).getRole().getLevel() <= GameRole.TROY.getLevel())
         .toList();
     players.forEach(e -> ((Player) e).setHealth(0));
-
-    entity.teleport(startPoint.clone().add(direction.clone().setY(0).multiply(p)));
+    Location loc = startPoint.clone().add(direction.clone().setY(0).multiply(p));
+    entity.teleport(loc);
   }
 
   public boolean end() {

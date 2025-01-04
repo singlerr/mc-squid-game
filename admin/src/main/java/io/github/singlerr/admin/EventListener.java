@@ -14,7 +14,7 @@ public final class EventListener extends InteractableListener {
 
   @EventHandler
   public void onInteract(PlayerInteractAtEntityEvent event) {
-    if (!(event.getRightClicked() instanceof ArmorStand armorStand)) {
+    if (!(event.getRightClicked() instanceof ArmorStand display)) {
       return;
     }
 
@@ -23,8 +23,8 @@ public final class EventListener extends InteractableListener {
       return;
     }
 
-    ModelUtils.setModel(armorStand, context.modelLocation(), context.transform());
-    ModelTrackers.addEntity(armorStand.getUniqueId(), context.modelLocation(), armorStand,
+    ModelUtils.setModel(display, context.modelLocation(), context.transform());
+    ModelTrackers.addEntity(display.getUniqueId(), context.modelLocation(), display,
         context.transform());
   }
 

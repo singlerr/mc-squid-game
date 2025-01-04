@@ -53,7 +53,7 @@ public final class Ticker {
         new StatusSwitch(PlayerTrolleyStatus.IDLE, () -> this::slowed, idleTime);
   }
 
-  private boolean shouldTick() {
+  public boolean shouldTick() {
     return region.isIn(player.getPlayer().getLocation());
   }
 
@@ -113,6 +113,7 @@ public final class Ticker {
       return;
     }
     current.setEnd(true);
+    player.getPlayer().setWalkSpeed(result.isSuccess() ? idleSpeed : slowedSpeed);
     current.setIntermissionSuccess(result.isSuccess());
   }
 

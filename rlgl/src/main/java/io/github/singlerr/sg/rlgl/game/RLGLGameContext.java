@@ -3,15 +3,18 @@ package io.github.singlerr.sg.rlgl.game;
 import io.github.singlerr.sg.core.context.GameContext;
 import io.github.singlerr.sg.core.context.GameEventBus;
 import io.github.singlerr.sg.core.context.GamePlayer;
+import io.github.singlerr.sg.core.context.GameRole;
 import io.github.singlerr.sg.core.context.GameStatus;
 import io.github.singlerr.sg.core.network.NetworkRegistry;
 import io.github.singlerr.sg.core.network.packets.PacketAnimateTransformationModel;
 import io.github.singlerr.sg.core.setup.GameSettings;
 import io.github.singlerr.sg.core.utils.Animation;
 import io.github.singlerr.sg.core.utils.Interpolator;
+import io.github.singlerr.sg.core.utils.PlayerUtils;
 import io.github.singlerr.sg.core.utils.SoundSet;
 import io.github.singlerr.sg.core.utils.TaskScheduler;
 import io.github.singlerr.sg.core.utils.TickableSoundPlayer;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -20,7 +23,8 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.bukkit.Bukkit;
-import org.bukkit.entity.ArmorStand;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.Player;
 
 @Slf4j
 public final class RLGLGameContext extends GameContext {
@@ -39,7 +43,7 @@ public final class RLGLGameContext extends GameContext {
   private RLGLStatus rlglStatus;
   @Setter
   @Getter
-  private ArmorStand youngHee;
+  private Entity youngHee;
   @Getter
   @Setter
   private Interpolator rotationAnimator;
@@ -81,24 +85,27 @@ public final class RLGLGameContext extends GameContext {
     rlglStatus = RLGLStatus.RED_LIGHT;
     PacketAnimateTransformationModel pkt =
         new PacketAnimateTransformationModel(youngHee.getUniqueId(), youngHee.getEntityId(),
-            new Animation(getGameSettings().getNodeIndex(), getGameSettings().getBackState(),
-                getGameSettings().getFrontState(),
+            new Animation(getGameSettings().getNodeIndex(), getGameSettings().getFrontState(),
+                getGameSettings().getBackState(),
                 (long) (getGameSettings().getRedLightTurnDelay() * 1000)));
     network.getChannel().sendToAll(pkt);
   }
 
   public void greenLight(SoundSet set) {
+    Collection<Player> listeners =
+        getPlayers(GameRole.ADMIN).stream().filter(GamePlayer::available).map(
+            GamePlayer::getPlayer).toList();
     for (UUID id : killTargets) {
       GamePlayer p = getPlayer(id);
       if (!p.available()) {
         continue;
       }
-      p.getPlayer().setGlowing(false);
+      PlayerUtils.setGlowing(p.getPlayer(), listeners, false);
     }
     PacketAnimateTransformationModel pkt =
         new PacketAnimateTransformationModel(youngHee.getUniqueId(), youngHee.getEntityId(),
-            new Animation(getGameSettings().getNodeIndex(), getGameSettings().getFrontState(),
-                getGameSettings().getBackState(),
+            new Animation(getGameSettings().getNodeIndex(), getGameSettings().getBackState(),
+                getGameSettings().getFrontState(),
                 (long) (getGameSettings().getGreenLightTurnDelay() * 1000)));
     network.getChannel().sendToAll(pkt);
     scheduler.enqueue((long) (getGameSettings().getGreenLightTurnDelay() * 1000), () -> {

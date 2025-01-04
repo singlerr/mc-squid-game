@@ -12,6 +12,7 @@ public final class RouletteGameSettings implements GameSettings {
   private SoundSet gunReloading = new SoundSet("roulette.gun_reloading", 2f);
   private SoundSet gunShot = new SoundSet("roulette.gun_shot", 0.5f);
   private SoundSet gunAiming = new SoundSet("roulette.gun_aiming", 1f);
+  private SoundSet gunEmpty = new SoundSet("roulette.gun_empty", 1f);
 
   private String gunName = "총";
 

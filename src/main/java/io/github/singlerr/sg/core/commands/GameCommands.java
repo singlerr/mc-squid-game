@@ -70,8 +70,15 @@ public final class GameCommands implements CommandExecutor, TabCompleter {
           GameCore.getInstance().getDataFolder().mkdir();
         }
         storage.save();
+        successCallback(sender, "저장 완료");
       } catch (IOException ex) {
         errorCallback(sender, "설정 저장에 실패했습니다");
+      }
+    } else if (subCmd.equalsIgnoreCase("reload")) {
+      try {
+        storage.loadSettings();
+      } catch (IOException e) {
+        errorCallback(sender, "리로드에 실패했습니다. games.json 파일이 있는지 확인하세요.");
       }
     }
     return true;

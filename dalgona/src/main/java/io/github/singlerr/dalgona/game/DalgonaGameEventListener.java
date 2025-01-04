@@ -32,12 +32,13 @@ public final class DalgonaGameEventListener implements GameEventListener {
   public void onExit(GameContext context, GamePlayer player) {
     for (GamePlayer p : context.getPlayers()) {
       if (p.getRole().getLevel() <= GameRole.TROY.getLevel()) {
-        p.sendMessage(p.getUserDisplayName().append(Component.text(" 탈락").style(Style.style(
+        p.sendMessage(player.getUserDisplayName().append(Component.text(" 탈락").style(Style.style(
             NamedTextColor.RED))));
       } else {
         p
-            .sendMessage(p.getAdminDisplayName().append(Component.text(" 탈락").style(Style.style(
-                NamedTextColor.RED))));
+            .sendMessage(
+                player.getAdminDisplayName().append(Component.text(" 탈락").style(Style.style(
+                    NamedTextColor.RED))));
       }
     }
   }

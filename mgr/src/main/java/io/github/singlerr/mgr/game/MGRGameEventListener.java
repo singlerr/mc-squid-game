@@ -41,10 +41,10 @@ public final class MGRGameEventListener implements GameEventListener {
   public void onExit(GameContext context, GamePlayer player) {
     for (GamePlayer p : context.getPlayers()) {
       if (p.getRole().getLevel() <= GameRole.TROY.getLevel()) {
-        p.sendMessage(p.getUserDisplayName().append(Component.text(" 탈락").style(Style.style(
+        p.sendMessage(player.getUserDisplayName().append(Component.text(" 탈락").style(Style.style(
             NamedTextColor.RED))));
       } else {
-        p.sendMessage(p.getAdminDisplayName().append(Component.text(" 탈락").style(Style.style(
+        p.sendMessage(player.getAdminDisplayName().append(Component.text(" 탈락").style(Style.style(
             NamedTextColor.RED))));
       }
     }
@@ -54,7 +54,6 @@ public final class MGRGameEventListener implements GameEventListener {
   public void onTick(GameContext context) {
     long currentTime = System.currentTimeMillis();
     MGRGameContext gameContext = (MGRGameContext) context;
-    log.info("현재 상태: {}", gameContext.getGameStatus());
     MGRGameSettings settings = (MGRGameSettings) gameContext.getSettings();
     gameContext.getSoundPlayer().tick();
     gameContext.getScheduler().tick();
@@ -113,7 +112,7 @@ public final class MGRGameEventListener implements GameEventListener {
         if (type.equalsIgnoreCase("pillar")) {
           context.beginPillarSetup(player.getUniqueId(), (e) -> {
             context.getSettings()
-                .setPillarEntity(new EntitySerializable(e.getWorld().getName(), e.getUniqueId()));
+                .setPillarEntity(EntitySerializable.of(e));
             context.getSettings().setPillarLocation(e.getLocation());
           });
           infoCallback(sender, "이제 블레이즈 막대를 이용해 엔티티를 지정하세요.");
