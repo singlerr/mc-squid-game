@@ -7,6 +7,8 @@ import io.github.singlerr.sg.core.events.GameEventListener;
 import io.github.singlerr.sg.core.network.NetworkRegistry;
 import io.github.singlerr.sg.core.network.packets.PacketInitModel;
 import io.github.singlerr.sg.core.utils.ModelUtils;
+import io.github.singlerr.sg.core.utils.PlayerUtils;
+import java.util.Collection;
 import lombok.extern.slf4j.Slf4j;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -17,6 +19,7 @@ import org.bukkit.boss.BarColor;
 import org.bukkit.boss.BarStyle;
 import org.bukkit.boss.BossBar;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Display;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -93,6 +96,9 @@ public class RLGLGameEventListener implements GameEventListener {
     ctx.setStartTime(System.currentTimeMillis());
     Entity younghee = settings.getYoungHee().toEntity();
     if (younghee != null) {
+      younghee =
+          younghee.getPassengers().stream().filter(e -> e instanceof Display).map(e -> (Display) e)
+              .findAny().orElse(null);
       ctx.setYoungHee(younghee);
       ModelUtils.setModel(younghee, settings.getModelLocation());
     }
@@ -107,6 +113,14 @@ public class RLGLGameEventListener implements GameEventListener {
       timeIndicator.hide();
       timeIndicator.removeAll();
       timeIndicator = null;
+    }
+
+
+    RLGLGameContext ctx = (RLGLGameContext) context;
+    Collection<Player> admin = ctx.getPlayers(GameRole.ADMIN).stream().filter(GamePlayer::available)
+        .map(GamePlayer::getPlayer).toList();
+    for (GamePlayer player : ctx.getPlayers(GameRole.TROY.getLevel())) {
+      PlayerUtils.setGlowing(player.getPlayer(), admin, false);
     }
   }
 

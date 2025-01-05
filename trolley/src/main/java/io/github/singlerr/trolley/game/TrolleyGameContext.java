@@ -20,8 +20,10 @@ import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
+import org.bukkit.entity.Display;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
+import org.bukkit.util.Transformation;
 
 public final class TrolleyGameContext extends GameContext {
 
@@ -66,8 +68,18 @@ public final class TrolleyGameContext extends GameContext {
         if (entity != null) {
           for (EntitySerializable p : t.getEntity().getPassengers()) {
             Entity passenger = world.getEntity(p.getId());
-            if (passenger != null) {
-              entity.addPassenger(passenger);
+            if (passenger instanceof Display display) {
+              entity.addPassenger(display);
+              display.setGravity(false);
+              display.setInvulnerable(true);
+              display.setShadowStrength(1f);
+              display.setShadowRadius(1f);
+              display.setTeleportDuration(0);
+              display.setInterpolationDuration(0);
+              display.setInterpolationDelay(0);
+              Transformation transformation = display.getTransformation();
+              transformation.getTranslation().set(0);
+              display.setTransformation(transformation);
             }
           }
           entity.teleport(t.getInitialLocation());
@@ -129,7 +141,8 @@ public final class TrolleyGameContext extends GameContext {
   }
 
   private void runTrain(int trackNum) {
-    TrainEntity train = new TrainEntity(this, trainEntities.get(trackNum),
+    TrainEntity train = new TrainEntity(this, getGameSettings().getTrainEntities().get(trackNum),
+        trainEntities.get(trackNum),
         (long) (getGameSettings().getDuration() * 1000L), getGameSettings().getKillRadius(),
         getGameSettings().getRailways().get(trackNum));
     train.init();
@@ -154,7 +167,7 @@ public final class TrolleyGameContext extends GameContext {
     for (Integer numTrack : activeTracks.keySet()) {
       TrainEntity train = activeTracks.get(numTrack);
       if (train.end()) {
-        resetTrain(numTrack);
+        train.reset();
         activeTracks.remove(numTrack);
         continue;
       }
@@ -175,4 +188,5 @@ public final class TrolleyGameContext extends GameContext {
       e.teleport(t.getInitialLocation());
     }
   }
+
 }

@@ -19,24 +19,17 @@ public final class MGRGameSettings implements GameSettings {
   private EntitySerializable pillarEntity;
   private Location pillarLocation;
   private float curtainDelay = 5f;
-  private float curtainRadius = 10f;
-  private float curtainMoveDistance = 5f;
+  private float curtainRadius = 15f;
+  private float curtainMoveDistance = 1f;
   private float joiningRoomTime = 30f;
 
   public MGRGameSettings() {
     setupAnnouncerSounds();
-    setupRooms();
   }
 
   private void setupAnnouncerSounds() {
     for (int i = 1; i <= 10; i++) {
       announcerSounds.put(i, new SoundSet("mgr.announce" + i, 10f));
-    }
-  }
-
-  private void setupRooms() {
-    for (int i = 1; i <= 10; i++) {
-      rooms.put(i, new Region(null, null));
     }
   }
 

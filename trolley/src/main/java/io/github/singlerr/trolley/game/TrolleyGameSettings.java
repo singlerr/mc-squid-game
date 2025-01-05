@@ -27,7 +27,7 @@ public final class TrolleyGameSettings implements GameSettings {
   private float idleSpeed = 0.1f;
   private float slowedSpeed = 0.01f;
 
-  private SoundSet trainSound = new SoundSet("trolley.train", 18f);
+  private SoundSet trainSound = new SoundSet("trolley.train", 12f);
 
   public void copy(TrolleyGameSettings o) {
     trainEntities = new HashMap<>(o.trainEntities);

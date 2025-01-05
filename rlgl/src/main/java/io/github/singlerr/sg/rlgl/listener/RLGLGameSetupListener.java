@@ -4,7 +4,7 @@ import io.github.singlerr.sg.core.GameSetupManager;
 import io.github.singlerr.sg.core.utils.InteractableListener;
 import io.github.singlerr.sg.rlgl.game.RLGLGameSetupContext;
 import org.bukkit.Material;
-import org.bukkit.entity.ArmorStand;
+import org.bukkit.entity.Interaction;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.player.PlayerInteractAtEntityEvent;
@@ -27,7 +27,7 @@ public final class RLGLGameSetupListener extends InteractableListener {
       return;
     }
 
-    if (event.getRightClicked() instanceof ArmorStand armorStand) {
+    if (event.getRightClicked() instanceof Interaction armorStand) {
       context.setYoungHee(armorStand);
       infoCallback(player, "Created YoungHee to {}", armorStand);
       event.setCancelled(true);

@@ -44,7 +44,7 @@ public final class RouletteGameContext extends GameContext {
   }
 
   public void createFakeArrow(Player p) {
-    p.getInventory().setBoots(new ItemStack(Material.ARROW, 999));
+    p.getInventory().setBoots(new ItemStack(Material.ARROW, 64));
   }
 
   public ItemStack createGun(Gun gun) {
@@ -76,8 +76,9 @@ public final class RouletteGameContext extends GameContext {
   }
 
   public void playReloadingAnimation(Player player) {
-    player.playSound(player.getLocation(), getGameSettings().getGunReloading().getSound(), 1.0f,
-        1.0f);
+    player.getWorld()
+        .playSound(player.getLocation(), getGameSettings().getGunReloading().getSound(), 1.0f,
+            1.0f);
   }
 
   public void shot(Player player, Gun gun) {
@@ -88,11 +89,13 @@ public final class RouletteGameContext extends GameContext {
     boolean next = gun.getBullets().removeFirst();
     if (next) {
       // play gun sound
-      player.playSound(player.getLocation(), getGameSettings().getGunShot().getSound(), 1.0f, 1.0f);
+      player.getWorld()
+          .playSound(player.getLocation(), getGameSettings().getGunShot().getSound(), 1.0f, 1.0f);
       player.setHealth(0);
     } else {
-      player.playSound(player.getLocation(), getGameSettings().getGunEmpty().getSound(), 1.0f,
-          1.0f);
+      player.getWorld()
+          .playSound(player.getLocation(), getGameSettings().getGunEmpty().getSound(), 1.0f,
+              1.0f);
     }
   }
 }

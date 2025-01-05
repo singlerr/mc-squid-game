@@ -19,7 +19,7 @@ public final class IntermediaryGameEventListener implements GameEventListener {
     if (!player.available()) {
       return;
     }
-
+    player.getPlayer().setCustomNameVisible(true);
     if (player.getRole().getLevel() <= GameRole.TROY.getLevel()) {
       context.assignNumberName(player);
       context.syncName(player, GameRole.ADMIN);

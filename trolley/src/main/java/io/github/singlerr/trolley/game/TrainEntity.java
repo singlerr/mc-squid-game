@@ -1,6 +1,7 @@
 package io.github.singlerr.trolley.game;
 
 import io.github.singlerr.sg.core.context.GameRole;
+import io.github.singlerr.sg.core.utils.EntitySerializable;
 import io.github.singlerr.sg.core.utils.Region;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +21,7 @@ public final class TrainEntity {
   private final Location endPoint;
   private final Vector direction;
   private final Entity entity;
+  private final Train train;
   private final long duration;
   private final float radius;
   private boolean end;
@@ -27,10 +29,15 @@ public final class TrainEntity {
   private boolean started;
   private long startTime;
 
-  public TrainEntity(TrolleyGameContext context, Entity entity, long duration, float radius,
+  private Vector3f originalTranslation;
+  private Display display;
+
+  public TrainEntity(TrolleyGameContext context, Train train, Entity entity, long duration,
+                     float radius,
                      Region railway) {
     this.context = context;
     this.entity = entity;
+    this.train = train;
     this.startPoint = railway.getStart().clone();
     this.endPoint = railway.getEnd().clone();
     this.direction = this.endPoint.toVector().subtract(this.startPoint.toVector());
@@ -38,10 +45,34 @@ public final class TrainEntity {
     this.radius = radius;
     this.end = false;
     this.started = false;
+
   }
 
   public void init() {
     entity.teleport(startPoint);
+    if (entity.getPassengers().isEmpty()) {
+      display = train.getEntity().getPassengers().stream().map(EntitySerializable::toEntity)
+          .filter(e -> e instanceof Display).map(e -> (Display) e).findAny().orElse(null);
+      if (display != null) {
+        display.setInterpolationDelay(0);
+        display.setInterpolationDuration(0);
+        display.setTeleportDuration(0);
+        Transformation t = display.getTransformation();
+        originalTranslation = t.getTranslation();
+        entity.addPassenger(display);
+      }
+    } else {
+      display =
+          entity.getPassengers().stream().filter(e -> e instanceof Display).map(e -> (Display) e)
+              .findAny().orElse(null);
+      if (display != null) {
+        display.setInterpolationDelay(0);
+        display.setInterpolationDuration(0);
+        display.setTeleportDuration(0);
+        Transformation t = display.getTransformation();
+        originalTranslation = t.getTranslation();
+      }
+    }
   }
 
   public void tick(long time) {
@@ -52,16 +83,10 @@ public final class TrainEntity {
     if (!started) {
       startTime = time;
       started = true;
-      for (Entity passenger : entity.getPassengers()) {
-        if (passenger instanceof Display display) {
-          Transformation t = display.getTransformation();
-          display.setInterpolationDelay(0);
-          display.setInterpolationDuration((int) ((duration / 1000) * 20));
-          t.getTranslation().add(new Vector3f((float) direction.getX(), (float) direction.getY(),
-              (float) direction.getZ()));
-          display.setTransformation(t);
-        }
-      }
+      Transformation t = display.getTransformation();
+      t.getTranslation().set(direction.toVector3f().mul(1, 0, 1));
+      display.setInterpolationDuration((int) duration / 1000 * 20);
+      display.setTransformation(t);
     }
 
     long timePassed = time - startTime;
@@ -77,13 +102,27 @@ public final class TrainEntity {
       end = true;
       return;
     }
-    List<Entity> players = entity.getNearbyEntities(radius, radius, radius).stream().filter(
-            e -> context.getPlayer(e.getUniqueId()) != null &&
-                context.getPlayer(e.getUniqueId()).getRole().getLevel() <= GameRole.TROY.getLevel())
-        .toList();
-    players.forEach(e -> ((Player) e).setHealth(0));
     Location loc = startPoint.clone().add(direction.clone().setY(0).multiply(p));
-    entity.teleport(loc);
+
+    List<Entity> players =
+        entity.getWorld().getNearbyEntities(loc, radius, radius, radius).stream().filter(
+                e -> context.getPlayer(e.getUniqueId()) != null &&
+                    context.getPlayer(e.getUniqueId()).getRole().getLevel() <= GameRole.TROY.getLevel())
+            .toList();
+    players.forEach(e -> ((Player) e).setHealth(0));
+
+  }
+
+  public void reset() {
+    Display display = train.getEntity().getPassengers().stream().map(EntitySerializable::toEntity)
+        .filter(e -> e instanceof Display).map(e -> (Display) e).findAny().orElse(null);
+    if (display != null) {
+      display.setInterpolationDuration(0);
+      Transformation t = display.getTransformation();
+      t.getTranslation().set(originalTranslation);
+      display.setTransformation(t);
+    }
+    entity.teleport(startPoint);
   }
 
   public boolean end() {

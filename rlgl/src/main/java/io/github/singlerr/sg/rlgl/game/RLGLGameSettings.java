@@ -23,11 +23,11 @@ public class RLGLGameSettings implements GameSettings {
   private float greenLightTurnDelay = 3f;
   private float redLightTurnDelay = 3f;
 
-  private SoundSet soundOne = new SoundSet("game1.preset1", 2.0f);
-  private SoundSet soundTwo = new SoundSet("game1.preset2", 3.0f);
-  private SoundSet soundThree = new SoundSet("game1.preset3", 4.0f);
-  private SoundSet soundFour = new SoundSet("game1.preset4", 5.0f);
-  private SoundSet soundFive = new SoundSet("game1.preset5", 8.0f);
+  private SoundSet soundOne = new SoundSet("rlgl.preset1", 5.0f);
+  private SoundSet soundTwo = new SoundSet("rlgl.preset2", 5.0f);
+  private SoundSet soundThree = new SoundSet("rlgl.preset3", 5.0f);
+  private SoundSet soundFour = new SoundSet("rlgl.preset4", 5.0f);
+  private SoundSet soundFive = new SoundSet("rlgl.preset5", 8.0f);
 
 
   private Transform backState =

@@ -69,8 +69,8 @@ public final class TrolleyGameEventListener implements GameEventListener {
 
   @Override
   public void onSubCommand(CommandSender sender, String[] args) {
+    Player p = (Player) sender;
     if (args.length > 1) {
-      Player p = (Player) sender;
       if (args[0].equalsIgnoreCase("fire")) {
         try {
           int trackNum = Integer.parseInt(args[1]);
@@ -99,18 +99,20 @@ public final class TrolleyGameEventListener implements GameEventListener {
           }
           errorCallback(sender, "자연수를 입력하세요.");
         }
-      } else if (args[0].equalsIgnoreCase("region")) {
-        if (game.getSetup().getContext().getGameRegionBuilder(p.getUniqueId()) != null) {
-          game.getSetup().getContext().endGameRegion(p.getUniqueId());
-          successCallback(sender, "설정 모드 해제");
-        } else {
-          game.getSetup().getContext().beginGameRegion(p.getUniqueId());
-          successCallback(sender, "이제 나무 도끼를 이용해 게임 지역을 선택하세요.");
-        }
-      } else if (args[0].equalsIgnoreCase("start")) {
-        game.getContext().startIntermissions();
-        successCallback(sender, "게임 시작");
       }
+      return;
+    }
+    if (args[0].equalsIgnoreCase("region")) {
+      if (game.getSetup().getContext().getGameRegionBuilder(p.getUniqueId()) != null) {
+        game.getSetup().getContext().endGameRegion(p.getUniqueId());
+        successCallback(sender, "설정 모드 해제");
+      } else {
+        game.getSetup().getContext().beginGameRegion(p.getUniqueId());
+        successCallback(sender, "이제 나무 도끼를 이용해 게임 지역을 선택하세요.");
+      }
+    } else if (args[0].equalsIgnoreCase("start")) {
+      game.getContext().startIntermissions();
+      successCallback(sender, "게임 시작");
     }
   }
 

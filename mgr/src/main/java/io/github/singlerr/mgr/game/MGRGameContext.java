@@ -31,6 +31,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.block.Block;
 import org.bukkit.block.data.type.Door;
 import org.bukkit.entity.Display;
 import org.bukkit.entity.Entity;
@@ -38,6 +39,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.util.BoundingBox;
 import org.bukkit.util.Transformation;
 import org.bukkit.util.Vector;
+import org.joml.Vector3f;
 
 @Slf4j
 @Getter
@@ -68,8 +70,21 @@ public final class MGRGameContext extends GameContext {
     this.interpolator = new Interpolator();
   }
 
+  public Display getDisplay(Entity entity) {
+    return entity.getPassengers().stream().filter(e -> e instanceof Display).map(e -> (Display) e)
+        .findAny().orElse(null);
+  }
+
   public MGRGameSettings getGameSettings() {
     return (MGRGameSettings) getSettings();
+  }
+
+  private void move(Display display, Vector3f v, int dur) {
+    Transformation t = display.getTransformation();
+    t.getTranslation().add(v);
+    display.setInterpolationDelay(0);
+    display.setInterpolationDuration(dur);
+    display.setTransformation(t);
   }
 
   public void startNewSession(int playerCount) {
@@ -78,6 +93,9 @@ public final class MGRGameContext extends GameContext {
     int offset = random.nextInt(2) - 1;
     setBarrier();
     Location origin = pillar.getLocation().clone();
+    move(getDisplay(pillar), getGameSettings().getPillarLocation().toVector().toVector3f()
+            .sub(pillar.getLocation().toVector().toVector3f()).negate(),
+        (int) (getGameSettings().getCurtainDelay() * 20));
     interpolator.add((long) (getGameSettings().getCurtainDelay() * 1000), p -> {
       if ((int) (pillar.getLocation().distance(getGameSettings().getPillarLocation())) <= 0) {
         return;
@@ -87,8 +105,11 @@ public final class MGRGameContext extends GameContext {
     });
     scheduler.enqueue((long) (getGameSettings().getCurtainDelay() * 1000), () -> {
       SoundSet music = getGameSettings().getMusicSound();
-      startJoiningRoom();
-      rotate((Display) pillar, music.getDuration());
+
+      interpolator.add((long) (music.getDuration() * 1000), (progress) -> {
+        float angle = (float) (progress * Math.PI * 4);
+        rotate(getDisplay(pillar), angle, 0);
+      });
       this.soundPlayer.enqueue(getPlayers(), music.getSound(),
           getGameSettings().getJoiningRoomTime() - offset, () -> {
             Bukkit.getServer().stopSound(SoundStop.named(Key.key(music.getSound())));
@@ -97,12 +118,9 @@ public final class MGRGameContext extends GameContext {
     });
   }
 
-  private void rotate(Display display, float duration) {
+  private void rotate(Display display, float angle, float duration) {
     Transformation t = display.getTransformation();
-    float anglePerSeconds = 360f / 10f;
-    float totalAngle = anglePerSeconds * duration;
-
-    t.getLeftRotation().rotationXYZ(0, totalAngle, 0);
+    t.getLeftRotation().rotationXYZ(0, angle, 0);
 
     display.setInterpolationDuration((int) (duration * 20));
     display.setInterpolationDelay(-1);
@@ -112,6 +130,10 @@ public final class MGRGameContext extends GameContext {
   public void openCurtain() {
     gameStatus = MGRGameStatus.OPENING_CURTAIN;
     Location origin = pillar.getLocation().clone();
+    move(getDisplay(pillar), pillar.getLocation().toVector()
+            .add(new Vector(0, getGameSettings().getCurtainMoveDistance(), 0)).toVector3f()
+            .sub(pillar.getLocation().toVector().toVector3f()),
+        (int) (getGameSettings().getCurtainDelay() * 20));
     interpolator.add((long) (getGameSettings().getCurtainDelay() * 1000), p -> {
       float newY = getGameSettings().getCurtainMoveDistance() * p;
       pillar.teleport(origin.clone().add(new Vector(0, newY, 0)));
@@ -122,26 +144,33 @@ public final class MGRGameContext extends GameContext {
         log.error("No announcer sounds available for {} player counts.", playerCount);
         return;
       }
-      this.soundPlayer.enqueue(getPlayers(), set.getSound(), set.getDuration(),
+      startJoiningRoom();
+      this.soundPlayer.enqueue(getPlayers(), set.getSound(), getGameSettings().getJoiningRoomTime(),
           this::startClosingRoom);
     });
+  }
+
+  private void setDoorOpen(boolean flag) {
+    for (Location loc : getGameSettings().getDoors().values()) {
+      Block b = loc.getBlock();
+      if (b.getBlockData() instanceof Door door) {
+        door.setOpen(flag);
+        b.setBlockData(door);
+        b.getState().update(true);
+      }
+    }
   }
 
   public void startJoiningRoom() {
     gameStatus = MGRGameStatus.JOINING_ROOM;
     joiningStartedTime = System.currentTimeMillis();
     removeBarrier();
+    setDoorOpen(true);
   }
 
   public void startClosingRoom() {
     gameStatus = MGRGameStatus.CLOSING_ROOM;
-    for (Location loc : getGameSettings().getDoors().values()) {
-      if (loc.getBlock().getState() instanceof Door door) {
-        door.setOpen(false);
-        loc.getBlock().setBlockData(door);
-        loc.getBlock().getState().update(true);
-      }
-    }
+    setDoorOpen(false);
     List<Component> success = new ArrayList<>();
     List<Component> failed = new ArrayList<>();
     for (Map.Entry<Integer, Region> entry : ((MGRGameSettings) getSettings()).getRooms()
@@ -166,6 +195,9 @@ public final class MGRGameContext extends GameContext {
   public void closeSession() {
     float distPerTick = getGameSettings().getCurtainMoveDistance() /
         (getGameSettings().getCurtainDelay() * 1000);
+    move(getDisplay(pillar), getGameSettings().getPillarLocation().toVector().toVector3f()
+            .sub(pillar.getLocation().toVector().toVector3f()),
+        (int) (getGameSettings().getCurtainDelay() * 20));
     interpolator.add((long) (getGameSettings().getCurtainDelay() * 1000), p -> {
       if (pillar.getLocation().distance(getGameSettings().getPillarLocation()) < 1) {
         return;

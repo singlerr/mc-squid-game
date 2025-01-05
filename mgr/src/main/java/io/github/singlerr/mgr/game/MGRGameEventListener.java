@@ -69,14 +69,18 @@ public final class MGRGameEventListener implements GameEventListener {
       if (timeRemaining > 0) {
         if (joiningTimeIndicator == null) {
           joiningTimeIndicator = Bukkit.createBossBar("", BarColor.RED, BarStyle.SOLID);
+          for (GamePlayer player : gameContext.getPlayers()) {
+            if (!player.available()) {
+              continue;
+            }
+            joiningTimeIndicator.addPlayer(player.getPlayer());
+          }
         }
         int secs = (int) (timeRemaining / 1000L);
         int minute = secs / 60;
         int seconds = secs % 60;
         joiningTimeIndicator.setTitle("남은 시간: " + minute + "분 " + seconds + "초");
         joiningTimeIndicator.setProgress((float) timeRemaining / (float) joiningRoomTime);
-      } else {
-        gameContext.startClosingRoom();
       }
     }
   }
@@ -84,13 +88,20 @@ public final class MGRGameEventListener implements GameEventListener {
   @Override
   public void onStart(GameContext context) {
     MGRGameSettings settings = ((MGRGameContext) context).getGameSettings();
-    Entity e = settings.getPillarEntity().toEntity();
-    ((MGRGameContext) context).setPillar(e);
+    if (settings.getPillarEntity() != null) {
+      Entity e = settings.getPillarEntity().toEntity();
+      ((MGRGameContext) context).setPillar(e);
+    }
+
   }
 
   @Override
   public void onEnd(GameContext context) {
-
+    if (joiningTimeIndicator != null) {
+      joiningTimeIndicator.removeAll();
+      joiningTimeIndicator.setVisible(false);
+      joiningTimeIndicator = null;
+    }
   }
 
   @Override
@@ -146,6 +157,11 @@ public final class MGRGameEventListener implements GameEventListener {
           int playerCount = Integer.parseInt(count);
           game.getContext().startNewSession(playerCount);
           infoCallback(sender, "게임 시작 - 정원: {}명", playerCount);
+          if (joiningTimeIndicator != null) {
+            joiningTimeIndicator.removeAll();
+            joiningTimeIndicator.hide();
+            joiningTimeIndicator = null;
+          }
         } catch (NumberFormatException e) {
           errorCallback(sender, "자연수를 입력하세요.");
         }
