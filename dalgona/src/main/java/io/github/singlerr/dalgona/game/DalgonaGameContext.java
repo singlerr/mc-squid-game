@@ -87,6 +87,7 @@ public class DalgonaGameContext extends GameContext {
     ItemStack dalgonaItem = new ItemStack(getGameSettings().getDalgonaType());
     ItemMeta meta = dalgonaItem.getItemMeta();
     meta.displayName(Component.text("달고나").style(Style.style(NamedTextColor.YELLOW)));
+    dalgonaItem.setItemMeta(meta);
     getGameSettings().getDalgonaImages().values();
     for (GamePlayer player : getPlayers()) {
       if (!player.available()) {

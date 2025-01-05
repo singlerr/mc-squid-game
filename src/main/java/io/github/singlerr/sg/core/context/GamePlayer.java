@@ -24,6 +24,10 @@ public class GamePlayer implements Comparable<GamePlayer> {
   public GamePlayer(Player player, GameRole role) {
     this(player.getUniqueId(), player, role, Component.text(player.getName()),
         Component.text(player.getName()), 0);
+
+    if (role.getLevel() >= GameRole.ADMIN.getLevel()) {
+      setUserDisplayName(Component.text("?"));
+    }
   }
 
   public static GamePlayer ofUser(Player player) {

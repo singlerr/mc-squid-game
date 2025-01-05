@@ -1,56 +1,34 @@
 package io.github.singlerr.admin;
 
-import io.github.singlerr.sg.core.utils.Transform;
-import java.util.UUID;
+import io.github.singlerr.sg.core.utils.EntitySerializable;
 import lombok.Data;
-import org.bukkit.Bukkit;
-import org.bukkit.World;
 import org.bukkit.entity.Entity;
 
 @Data
 public class EntityReference {
 
-  private UUID id;
   private String modelLocation;
-  private String world;
-  private Transform transform;
+  private EntitySerializable serializedEntity;
 
   private transient Entity entity;
 
-  public EntityReference(UUID id, String modelLocation, String world, Transform transform) {
-    this.id = id;
+  public EntityReference(String modelLocation, EntitySerializable serializedEntity) {
     this.modelLocation = modelLocation;
-    this.world = world;
-    this.transform = transform;
+    this.serializedEntity = serializedEntity;
     sync();
   }
 
-  public EntityReference(UUID id, String modelLocation, String world, Entity entity,
-                         Transform transform) {
-    this.id = id;
-    this.modelLocation = modelLocation;
-    this.world = world;
-    this.entity = entity;
-    this.transform = transform;
+  public static EntityReference of(String modelLocation, EntitySerializable serializedEntity) {
+    return new EntityReference(modelLocation, serializedEntity);
   }
 
-  public static EntityReference of(UUID id, String modelLocation, Transform transform,
-                                   Entity entity) {
-    return new EntityReference(id, modelLocation, entity.getWorld().getName(), entity, transform);
-  }
-
-  public static EntityReference of(UUID id, String modelLocation, String world,
-                                   Transform transform) {
-    return new EntityReference(id, modelLocation, world, transform);
+  public static EntityReference of(String modelLocation, Entity entity) {
+    return new EntityReference(modelLocation, EntitySerializable.of(entity));
   }
 
   public boolean sync() {
-    World w = Bukkit.getWorld(world);
-    if (w == null) {
-      return false;
-    }
     if (entity == null) {
-      entity = w.getEntity(id);
+      entity = serializedEntity.toEntity();
     }
     return entity != null;
   }

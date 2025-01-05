@@ -12,7 +12,9 @@ import io.github.singlerr.sg.core.utils.SoundSet;
 import io.github.singlerr.sg.core.utils.TaskScheduler;
 import io.github.singlerr.sg.core.utils.TickableSoundPlayer;
 import java.security.SecureRandom;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -22,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.sound.SoundStop;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.JoinConfiguration;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.Style;
 import org.bukkit.Bukkit;
@@ -29,9 +32,11 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.data.type.Door;
+import org.bukkit.entity.Display;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.util.BoundingBox;
+import org.bukkit.util.Transformation;
 import org.bukkit.util.Vector;
 
 @Slf4j
@@ -82,12 +87,26 @@ public final class MGRGameContext extends GameContext {
     });
     scheduler.enqueue((long) (getGameSettings().getCurtainDelay() * 1000), () -> {
       SoundSet music = getGameSettings().getMusicSound();
+      startJoiningRoom();
+      rotate((Display) pillar, music.getDuration());
       this.soundPlayer.enqueue(getPlayers(), music.getSound(),
           getGameSettings().getJoiningRoomTime() - offset, () -> {
             Bukkit.getServer().stopSound(SoundStop.named(Key.key(music.getSound())));
             openCurtain();
           });
     });
+  }
+
+  private void rotate(Display display, float duration) {
+    Transformation t = display.getTransformation();
+    float anglePerSeconds = 360f / 10f;
+    float totalAngle = anglePerSeconds * duration;
+
+    t.getLeftRotation().rotationXYZ(0, totalAngle, 0);
+
+    display.setInterpolationDuration((int) (duration * 20));
+    display.setInterpolationDelay(-1);
+    display.setTransformation(t);
   }
 
   public void openCurtain() {
@@ -103,7 +122,6 @@ public final class MGRGameContext extends GameContext {
         log.error("No announcer sounds available for {} player counts.", playerCount);
         return;
       }
-      startJoiningRoom();
       this.soundPlayer.enqueue(getPlayers(), set.getSound(), set.getDuration(),
           this::startClosingRoom);
     });
@@ -124,16 +142,25 @@ public final class MGRGameContext extends GameContext {
         loc.getBlock().getState().update(true);
       }
     }
+    List<Component> success = new ArrayList<>();
+    List<Component> failed = new ArrayList<>();
     for (Map.Entry<Integer, Region> entry : ((MGRGameSettings) getSettings()).getRooms()
         .entrySet()) {
       int roomNum = entry.getKey();
       Region roomRegion = entry.getValue();
       int count = getRoomPlayerCount(roomRegion);
       if (playerCount != count) {
-        broadcast(Component.text(roomNum + "번 인원 수 미충족, 현재 인원: " + count).style(Style.style(
-            NamedTextColor.YELLOW)), GameRole.ADMIN);
+        failed.add(Component.text(roomNum + "번").append(Component.text("(" + count + "명)")));
+      } else {
+        success.add(Component.text(roomNum + "번").append(Component.text("(" + count + "명)")));
       }
     }
+    broadcast(
+        Component.text("인원 충족: [").append(Component.join(JoinConfiguration.commas(false), success))
+            .append(Component.text("]")).style(Style.style(NamedTextColor.GREEN)), GameRole.ADMIN);
+    broadcast(
+        Component.text("인원 미충족: [").append(Component.join(JoinConfiguration.commas(false), failed))
+            .append(Component.text("]")).style(Style.style(NamedTextColor.YELLOW)), GameRole.ADMIN);
   }
 
   public void closeSession() {

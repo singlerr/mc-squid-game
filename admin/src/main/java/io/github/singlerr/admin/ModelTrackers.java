@@ -1,6 +1,5 @@
 package io.github.singlerr.admin;
 
-import io.github.singlerr.sg.core.utils.Transform;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -13,8 +12,8 @@ import org.bukkit.entity.Entity;
 public class ModelTrackers {
   private Map<UUID, EntityReference> loadedEntities = Collections.synchronizedMap(new HashMap<>());
 
-  public void addEntity(UUID id, String modelLocation, Entity entity, Transform transform) {
-    loadedEntities.put(id, EntityReference.of(id, modelLocation, transform, entity));
+  public void addEntity(String modelLocation, Entity entity) {
+    loadedEntities.put(entity.getUniqueId(), EntityReference.of(modelLocation, entity));
   }
 
   public void addEntity(UUID id, EntityReference reference) {

@@ -103,8 +103,8 @@ public final class Admin extends JavaPlugin {
       for (Map.Entry<UUID, EntityReference> e : storage.getEntities()
           .entrySet()) {
         ModelTrackers.addEntity(e.getKey(),
-            EntityReference.of(e.getValue().getId(), e.getValue().getModelLocation(),
-                e.getValue().getWorld(), e.getValue().getTransform()));
+            EntityReference.of(e.getValue().getModelLocation(),
+                e.getValue().getSerializedEntity()));
       }
     } catch (IOException ex) {
       copyDefaults(new ModelStorage(ModelTrackers.entriesNotNull()));

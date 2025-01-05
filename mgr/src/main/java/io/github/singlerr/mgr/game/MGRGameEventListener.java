@@ -11,7 +11,6 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.Style;
 import org.bukkit.Bukkit;
-import org.bukkit.World;
 import org.bukkit.boss.BarColor;
 import org.bukkit.boss.BarStyle;
 import org.bukkit.boss.BossBar;
@@ -85,16 +84,8 @@ public final class MGRGameEventListener implements GameEventListener {
   @Override
   public void onStart(GameContext context) {
     MGRGameSettings settings = ((MGRGameContext) context).getGameSettings();
-    if (settings.getPillarEntity() != null) {
-      World w = Bukkit.getWorld(settings.getPillarEntity().getWorld());
-      if (w != null) {
-        Entity e = w.getEntity(settings.getPillarEntity().getId());
-        ((MGRGameContext) context).setPillar(e);
-        if (e != null) {
-          e.setGravity(false);
-        }
-      }
-    }
+    Entity e = settings.getPillarEntity().toEntity();
+    ((MGRGameContext) context).setPillar(e);
   }
 
   @Override

@@ -4,14 +4,18 @@ import io.github.singlerr.sg.core.GameCore;
 import io.github.singlerr.sg.core.context.GamePlayer;
 import io.github.singlerr.sg.core.context.GameRole;
 import java.security.SecureRandom;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
-import net.minecraft.network.protocol.game.ClientboundUpdateMobEffectPacket;
-import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.effect.MobEffects;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
+import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
 import net.skinsrestorer.api.SkinsRestorer;
 import net.skinsrestorer.api.SkinsRestorerProvider;
 import net.skinsrestorer.api.exception.DataRequestException;
@@ -48,12 +52,37 @@ public class PlayerUtils {
   }
 
   public void setGlowing(Player player, Collection<Player> listeners, boolean flag) {
-    ClientboundUpdateMobEffectPacket e =
-        new ClientboundUpdateMobEffectPacket(player.getEntityId(), new MobEffectInstance(
-            MobEffects.GLOWING, flag ? 9999 : 0));
+    byte glowingByte = (byte) (flag ? 0x40 : 0x0);
+    List<SynchedEntityData.DataValue<?>> eData = new ArrayList<>();
+    eData.add(
+        SynchedEntityData.DataValue.create(new EntityDataAccessor<>(0, EntityDataSerializers.BYTE),
+            glowingByte));
+    ClientboundSetEntityDataPacket metadata =
+        new ClientboundSetEntityDataPacket(player.getEntityId(), eData);
     for (Player listener : listeners) {
-      ((CraftPlayer) listener).getHandle().connection.send(e);
+      ((CraftPlayer) listener).getHandle().connection.send(metadata);
     }
+  }
+
+  public ClientboundSetEntityDataPacket createChangeCustomNamePacket(Player player,
+                                                                     Component displayName) {
+    List<SynchedEntityData.DataValue<?>> eData = new ArrayList<>();
+    eData.add(SynchedEntityData.DataValue.create(
+        new EntityDataAccessor<>(2, EntityDataSerializers.OPTIONAL_COMPONENT),
+        Optional.of(net.minecraft.network.chat.Component.literal(
+            PlainTextComponentSerializer.plainText().serialize(displayName)))));
+    return new ClientboundSetEntityDataPacket(player.getEntityId(), eData);
+  }
+
+  public ClientboundSetEntityDataPacket createChangeCustomNamePacket(Player player,
+                                                                     String displayName) {
+    List<SynchedEntityData.DataValue<?>> eData = new ArrayList<>();
+    eData.add(SynchedEntityData.DataValue.create(
+        new EntityDataAccessor<>(2, EntityDataSerializers.OPTIONAL_COMPONENT),
+        Optional.ofNullable(net.minecraft.network.chat.Component.literal(displayName))));
+    eData.add(SynchedEntityData.DataValue.create(
+        new EntityDataAccessor<>(3, EntityDataSerializers.BOOLEAN), true));
+    return new ClientboundSetEntityDataPacket(player.getEntityId(), eData);
   }
 
   public void changeSkin(Player player, String skinUrl) {

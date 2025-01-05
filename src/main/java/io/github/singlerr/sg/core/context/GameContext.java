@@ -2,6 +2,7 @@ package io.github.singlerr.sg.core.context;
 
 import com.mojang.authlib.GameProfile;
 import io.github.singlerr.sg.core.setup.GameSettings;
+import io.github.singlerr.sg.core.utils.PlayerUtils;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -15,6 +16,7 @@ import lombok.Setter;
 import net.kyori.adventure.text.Component;
 import net.minecraft.Optionull;
 import net.minecraft.network.chat.RemoteChatSession;
+import net.minecraft.network.protocol.game.ClientboundBundlePacket;
 import net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket;
 import net.minecraft.server.level.ServerPlayer;
 import org.bukkit.GameMode;
@@ -134,18 +136,30 @@ public class GameContext {
         continue;
       }
       ServerPlayer handle = ((CraftPlayer) player.getPlayer()).getHandle();
-      String newName = admin ? player.getAdminDisplayName().toString() :
-          player.getUserDisplayName().toString();
+      String newName = admin ? "[" + player.getUserNumber() + "]" + player.getPlayer().getName() :
+          String.valueOf(player.getUserNumber());
 
       GameProfile profile = new GameProfile(handle.getUUID(), newName);
-      ClientboundPlayerInfoUpdatePacket pkt = new ClientboundPlayerInfoUpdatePacket(EnumSet.of(
-          ClientboundPlayerInfoUpdatePacket.Action.UPDATE_DISPLAY_NAME,
-          ClientboundPlayerInfoUpdatePacket.Action.UPDATE_LISTED),
-          new ClientboundPlayerInfoUpdatePacket.Entry(handle.getUUID(), profile,
-              true, handle.connection.latency(), handle.gameMode.getGameModeForPlayer(),
+
+      final EnumSet<ClientboundPlayerInfoUpdatePacket.Action> enumSet =
+          EnumSet.of(ClientboundPlayerInfoUpdatePacket.Action.ADD_PLAYER,
+              ClientboundPlayerInfoUpdatePacket.Action.INITIALIZE_CHAT,
+              ClientboundPlayerInfoUpdatePacket.Action.UPDATE_GAME_MODE,
+              ClientboundPlayerInfoUpdatePacket.Action.UPDATE_LISTED,
+              ClientboundPlayerInfoUpdatePacket.Action.UPDATE_LATENCY,
+              ClientboundPlayerInfoUpdatePacket.Action.UPDATE_DISPLAY_NAME);
+      final List<ClientboundPlayerInfoUpdatePacket.Entry> entry =
+          List.of(new ClientboundPlayerInfoUpdatePacket.Entry(handle.getUUID(), profile,
+              true,
+              handle.connection.latency(), handle.gameMode.getGameModeForPlayer(),
               net.minecraft.network.chat.Component.literal(newName),
               Optionull.map(handle.getChatSession(), RemoteChatSession::asData)));
-      ((CraftPlayer) target.getPlayer()).getHandle().connection.send(pkt);
+//      player.getPlayer().setCustomNameVisible(true);
+      ClientboundBundlePacket bundlePacket =
+          new ClientboundBundlePacket(List.of(new ClientboundPlayerInfoUpdatePacket(enumSet, entry),
+              PlayerUtils.createChangeCustomNamePacket(player.getPlayer(), newName)));
+
+      ((CraftPlayer) target.getPlayer()).getHandle().connection.send(bundlePacket);
     }
   }
 
@@ -183,14 +197,18 @@ public class GameContext {
               ClientboundPlayerInfoUpdatePacket.Action.UPDATE_LISTED,
               ClientboundPlayerInfoUpdatePacket.Action.UPDATE_LATENCY,
               ClientboundPlayerInfoUpdatePacket.Action.UPDATE_DISPLAY_NAME);
+
       final List<ClientboundPlayerInfoUpdatePacket.Entry> entry =
           List.of(new ClientboundPlayerInfoUpdatePacket.Entry(handle.getUUID(), profile,
               true,
               handle.connection.latency(), handle.gameMode.getGameModeForPlayer(),
               net.minecraft.network.chat.Component.literal(newName),
               Optionull.map(handle.getChatSession(), RemoteChatSession::asData)));
+      ClientboundBundlePacket bundlePacket =
+          new ClientboundBundlePacket(List.of(new ClientboundPlayerInfoUpdatePacket(enumSet, entry),
+              PlayerUtils.createChangeCustomNamePacket(player.getPlayer(), newName)));
       ((CraftPlayer) target.getPlayer()).getHandle().connection.send(
-          new ClientboundPlayerInfoUpdatePacket(enumSet, entry));
+          bundlePacket);
     }
   }
 }

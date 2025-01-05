@@ -56,18 +56,22 @@ public final class RLGLEventListener extends InteractableListener {
     float moveDist = (float) event.getFrom().distance(event.getTo());
     float rotDist = (float) event.getFrom().getDirection().distance(event.getTo().getDirection());
     if (moveDist >= settings.getKillSwitch() || rotDist >= settings.getKillSwitch()) {
+      int prevSize = game.getGameContext().getKillTargets().size();
       game.getGameContext().getKillTargets().add(player.getPlayer().getUniqueId());
-      Component msg =
-          Component.text("플레이어 움직임 감지: [").append(game.getGameContext().getKillTargets().stream()
-                  .map(i -> game.getGameContext().getPlayer(i).getAdminDisplayName())
-                  .reduce((a, b) -> a.append(Component.text(",")).append(b)).get())
-              .append(Component.text("]"));
-      Collection<GamePlayer> players = game.getGameContext().getPlayers(GameRole.ADMIN);
-      PlayerUtils.setGlowing(player.getPlayer(), players.stream().filter(GamePlayer::available).map(
-          GamePlayer::getPlayer).toList(), true);
-      for (GamePlayer gamePlayer : players) {
-        gamePlayer.getPlayer()
-            .sendMessage(msg.style(Style.style(NamedTextColor.RED)));
+      if (prevSize != game.getGameContext().getKillTargets().size()) {
+        Component msg =
+            Component.text("플레이어 움직임 감지: [").append(game.getGameContext().getKillTargets().stream()
+                    .map(i -> game.getGameContext().getPlayer(i).getAdminDisplayName())
+                    .reduce((a, b) -> a.append(Component.text(",")).append(b)).get())
+                .append(Component.text("]"));
+        Collection<GamePlayer> players = game.getGameContext().getPlayers(GameRole.ADMIN);
+        PlayerUtils.setGlowing(player.getPlayer(),
+            players.stream().filter(GamePlayer::available).map(
+                GamePlayer::getPlayer).toList(), true);
+        for (GamePlayer gamePlayer : players) {
+          gamePlayer.getPlayer()
+              .sendMessage(msg.style(Style.style(NamedTextColor.RED)));
+        }
       }
     }
   }
@@ -84,11 +88,6 @@ public final class RLGLEventListener extends InteractableListener {
 
   @EventHandler
   public void onJoin(PlayerJoinEvent event) {
-    Player player = event.getPlayer();
-    GamePlayer gamePlayer;
-    if ((gamePlayer = game.getGameContext().getPlayer(player.getUniqueId())) != null) {
-//      game.getGameContext().
-    }
   }
 
   @EventHandler

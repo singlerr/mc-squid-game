@@ -6,18 +6,17 @@ import io.github.singlerr.sg.core.context.GameRole;
 import io.github.singlerr.sg.core.events.GameEventListener;
 import io.github.singlerr.sg.core.network.NetworkRegistry;
 import io.github.singlerr.sg.core.network.packets.PacketInitModel;
+import io.github.singlerr.sg.core.utils.ModelUtils;
 import lombok.extern.slf4j.Slf4j;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.Style;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
-import org.bukkit.World;
 import org.bukkit.boss.BarColor;
 import org.bukkit.boss.BarStyle;
 import org.bukkit.boss.BossBar;
 import org.bukkit.command.CommandSender;
-import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -32,7 +31,6 @@ public class RLGLGameEventListener implements GameEventListener {
     if (!player.available()) {
       return;
     }
-    context.assignNumberName(player);
     if (timeIndicator != null) {
       timeIndicator.addPlayer(player.getPlayer());
     }
@@ -47,11 +45,6 @@ public class RLGLGameEventListener implements GameEventListener {
       NetworkRegistry network =
           Bukkit.getServicesManager().getRegistration(NetworkRegistry.class).getProvider();
       network.getChannel().sendTo(player.getPlayer(), pkt);
-    }
-    if (player.getRole().getLevel() == GameRole.TROY.getLevel()) {
-      context.syncName(player, GameRole.ADMIN);
-    } else {
-      context.syncNameLowerThan(GameRole.TROY.getLevel(), player);
     }
   }
 
@@ -98,24 +91,10 @@ public class RLGLGameEventListener implements GameEventListener {
     RLGLGameContext ctx = (RLGLGameContext) context;
     RLGLGameSettings settings = (RLGLGameSettings) ctx.getSettings();
     ctx.setStartTime(System.currentTimeMillis());
-    if (ctx.getYoungHee() == null && settings.getYoungHee().getWorld() != null &&
-        settings.getYoungHee().getId() != null) {
-      World world = Bukkit.getWorld(settings.getYoungHee().getWorld());
-      if (world != null) {
-        Entity entity = world.getEntity(settings.getYoungHee().getId());
-        if (entity instanceof ArmorStand armorStand) {
-          armorStand.customName(Component.text(armorStand.getUniqueId().toString()));
-          armorStand.setCustomNameVisible(true);
-          ctx.setYoungHee(armorStand);
-          PacketInitModel pkt =
-              new PacketInitModel(settings.getYoungHee().getId(), armorStand.getEntityId(),
-                  settings.getFrontState(),
-                  settings.getModelLocation());
-          NetworkRegistry network =
-              Bukkit.getServicesManager().getRegistration(NetworkRegistry.class).getProvider();
-          network.getChannel().sendToAll(pkt);
-        }
-      }
+    Entity younghee = settings.getYoungHee().toEntity();
+    if (younghee != null) {
+      ctx.setYoungHee(younghee);
+      ModelUtils.setModel(younghee, settings.getModelLocation());
     }
     timeIndicator = Bukkit.createBossBar("", BarColor.RED, BarStyle.SOLID);
     ctx.getPlayers().stream().filter(GamePlayer::available).map(GamePlayer::getPlayer)

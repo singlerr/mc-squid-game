@@ -19,15 +19,16 @@ public final class IntermediaryGameEventListener implements GameEventListener {
     if (!player.available()) {
       return;
     }
-    context.assignNumberName(player);
+
     if (player.getRole().getLevel() <= GameRole.TROY.getLevel()) {
+      context.assignNumberName(player);
       context.syncName(player, GameRole.ADMIN);
       PlayerUtils.changeSkin(player.getPlayer(), GameRole.USER);
-      context.syncNameLowerThan(GameRole.USER.getLevel(), player);
-      context.syncNameLowerThan(player, GameRole.USER.getLevel());
     } else {
-
+      player.setUserDisplayName(Component.text("?"));
     }
+    context.syncNameLowerThan(GameRole.USER.getLevel(), player);
+    context.syncNameLowerThan(player, GameRole.USER.getLevel());
   }
 
   @Override
@@ -37,10 +38,10 @@ public final class IntermediaryGameEventListener implements GameEventListener {
     }
     for (GamePlayer p : context.getPlayers()) {
       if (p.getRole().getLevel() <= GameRole.TROY.getLevel()) {
-        p.sendMessage(p.getUserDisplayName().append(Component.text(" 탈락").style(Style.style(
+        p.sendMessage(player.getUserDisplayName().append(Component.text(" 탈락").style(Style.style(
             NamedTextColor.RED))));
       } else {
-        p.sendMessage(p.getAdminDisplayName().append(Component.text(" 탈락").style(Style.style(
+        p.sendMessage(player.getAdminDisplayName().append(Component.text(" 탈락").style(Style.style(
             NamedTextColor.RED))));
       }
     }
