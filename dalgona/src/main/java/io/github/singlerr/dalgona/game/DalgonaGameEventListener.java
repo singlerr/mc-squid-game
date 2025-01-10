@@ -131,7 +131,7 @@ public final class DalgonaGameEventListener implements GameEventListener {
             timeIndicator.hide();
           }
           timeIndicator = Bukkit.createBossBar("", BarColor.RED, BarStyle.SOLID);
-          for (GamePlayer player : context.getPlayers(GameRole.TROY.getLevel())) {
+          for (GamePlayer player : context.getPlayers()) {
             if (player.available()) {
               timeIndicator.addPlayer(player.getPlayer());
             }
@@ -152,6 +152,22 @@ public final class DalgonaGameEventListener implements GameEventListener {
         } else {
           errorCallback(sender, "게임이 정지중이 아닙니다!");
         }
+      } else if (args[0].equalsIgnoreCase("cutoff")) {
+        if (args.length < 2) {
+          errorCallback(sender, "선착순 인원을 입력하세요.");
+          return;
+        }
+
+        int cutoff;
+        try {
+          cutoff = Integer.parseInt(args[1]);
+        } catch (NumberFormatException e) {
+          errorCallback(sender, "숫자를 입력하세요.");
+          return;
+        }
+
+        successCallback(sender, "선착순 {}명으로 설정 완료", cutoff);
+        game.getContext().setCutoff(cutoff);
       }
     }
   }

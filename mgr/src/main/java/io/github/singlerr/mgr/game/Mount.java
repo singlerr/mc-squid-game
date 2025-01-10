@@ -41,7 +41,6 @@ public final class Mount {
     Vector playerPos = p.getLocation().toVector();
     Vector dir = new Vector(pos.x, pos.y, pos.z).subtract(playerPos);
     player.getPlayer().setVelocity(new Vector(dir.getX(), 0, dir.getZ()));
-
   }
 
   public void remove() {

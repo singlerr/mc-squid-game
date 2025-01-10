@@ -98,6 +98,12 @@ public class GameContext {
       players.put(player.getId(), player);
       eventBus.postGameJoin(this, player);
       return true;
+    } else {
+      if (player.getRole() == GameRole.TROY) {
+        players.put(player.getId(), player);
+        return true;
+      }
+
     }
     return false;
   }

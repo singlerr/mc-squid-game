@@ -162,7 +162,7 @@ public final class MGRGameContext extends GameContext {
   }
 
   private void setupMounts(float rotationSpeed) {
-    List<GamePlayer> players = getPlayers(GameRole.TROY.getLevel());
+    List<GamePlayer> players = new ArrayList<>(getPlayers(GameRole.TROY.getLevel()));
     Collections.shuffle(players);
     float radius = getGameSettings().getCurtainRadius() - getGameSettings().getCurtainOffset() -
         random.nextInt(2);
@@ -272,9 +272,17 @@ public final class MGRGameContext extends GameContext {
         for (Entity entity : playersInRoom) {
           PlayerUtils.setGlowing((Player) entity, admins, true);
         }
-        failed.add(Component.text(roomNum + "번").append(Component.text("(" + count + "명)")));
+        Component comp = Component.text(roomNum + "번").append(Component.text("(" + count + "명)"));
+        if (count > 0) {
+          comp = comp.style(Style.style(NamedTextColor.AQUA));
+        }
+        failed.add(comp);
       } else {
-        success.add(Component.text(roomNum + "번").append(Component.text("(" + count + "명)")));
+        Component comp = Component.text(roomNum + "번").append(Component.text("(" + count + "명)"));
+        if (count > 0) {
+          comp = comp.style(Style.style(NamedTextColor.AQUA));
+        }
+        success.add(comp);
       }
     }
     broadcast(

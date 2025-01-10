@@ -59,6 +59,11 @@ public final class EventListener extends InteractableListener {
 
     ItemStack item =
         event.getPlayer().getInventory().getItem(event.getPlayer().getActiveItemHand());
+
+    if (item.getItemMeta() == null) {
+      return;
+    }
+
     if (item.getType() != Material.GOLDEN_AXE &&
         item.getItemMeta().getCustomModelData() != MP5_MODEL_DATA) {
       return;

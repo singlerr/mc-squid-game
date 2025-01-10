@@ -44,7 +44,7 @@ public final class GameCore extends JavaPlugin {
   @Accessors(fluent = true)
   @Getter
   @Setter
-  private boolean shouldBan = false;
+  private boolean shouldBan = true;
 
   public GameCore() {
     GameCore.instance = this;
