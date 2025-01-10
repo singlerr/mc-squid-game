@@ -1,9 +1,11 @@
 package io.github.singlerr.dalgona.game;
 
+import io.github.singlerr.sg.core.GameCore;
 import io.github.singlerr.sg.core.context.GameContext;
 import io.github.singlerr.sg.core.context.GamePlayer;
 import io.github.singlerr.sg.core.context.GameRole;
 import io.github.singlerr.sg.core.events.GameEventListener;
+import java.util.Date;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.Style;
@@ -25,7 +27,12 @@ public final class DalgonaGameEventListener implements GameEventListener {
 
   @Override
   public void onJoin(GameContext context, GamePlayer player) {
-
+    if (!player.available()) {
+      return;
+    }
+    player.getPlayer().setCustomNameVisible(true);
+    context.syncName(player, context.getPlayers());
+    context.syncName(context.getPlayers(), player);
   }
 
   @Override
@@ -41,6 +48,9 @@ public final class DalgonaGameEventListener implements GameEventListener {
                     NamedTextColor.RED))));
       }
     }
+    if (GameCore.getInstance().shouldBan()) {
+      player.getPlayer().ban("오징어게임에서 탈락했습니다!", (Date) null, "", true);
+    }
   }
 
   @Override
@@ -49,10 +59,6 @@ public final class DalgonaGameEventListener implements GameEventListener {
     if (ctx.getGameStatus() != DalgonaGameStatus.PROGRESS) {
       return;
     }
-    if (timeIndicator == null) {
-      timeIndicator = Bukkit.createBossBar("", BarColor.RED, BarStyle.SOLID);
-    }
-
     long currentTime = System.currentTimeMillis();
     long timePassed = currentTime - ctx.getStartTime();
     long timeLimit = (long) (ctx.getGameSettings().getTime() * 1000);
@@ -72,7 +78,9 @@ public final class DalgonaGameEventListener implements GameEventListener {
       int seconds = totalSecs % 60;
 
       timeIndicator.setProgress((double) timeLeft / (double) timeLimit);
-      timeIndicator.setTitle("남은 시간: " + minutes + "분" + seconds + "초");
+      timeIndicator.setTitle(MessageFormatter.basicArrayFormat("남은 시간: {}분 {}초, 선착순 {}/{} 명",
+          new Object[] {minutes, seconds, ctx.getPlayers(PlayerDalgonaStatus.SUCCESS).size(),
+              ctx.getCutoff()}));
     }
   }
 
@@ -101,11 +109,34 @@ public final class DalgonaGameEventListener implements GameEventListener {
         context.provideDalgona();
         successCallback(sender, "지급 완료");
       } else if (args[0].equalsIgnoreCase("start")) {
+        if (args.length < 2) {
+          errorCallback(sender, "선착순 인원을 입력하세요.");
+          return;
+        }
         if (context.getGameStatus() == DalgonaGameStatus.IDLE) {
           errorCallback(sender, "이미 게임이 진행중입니다!");
         } else {
-          context.startGame();
-          successCallback(sender, "게임이 시작되었습니다.");
+          int cutoff;
+          try {
+            cutoff = Integer.parseInt(args[1]);
+          } catch (NumberFormatException e) {
+            errorCallback(sender, "숫자를 입력하세요.");
+            return;
+          }
+
+          context.startGame(cutoff);
+          successCallback(sender, "게임이 시작되었습니다. 선착순 {}명", cutoff);
+          if (timeIndicator != null) {
+            timeIndicator.removeAll();
+            timeIndicator.hide();
+          }
+          timeIndicator = Bukkit.createBossBar("", BarColor.RED, BarStyle.SOLID);
+          for (GamePlayer player : context.getPlayers(GameRole.TROY.getLevel())) {
+            if (player.available()) {
+              timeIndicator.addPlayer(player.getPlayer());
+            }
+          }
+
         }
       } else if (args[0].equalsIgnoreCase("pause")) {
         if (context.getGameStatus() == DalgonaGameStatus.PROGRESS) {

@@ -24,7 +24,7 @@ public final class TrolleyGameSettings implements GameSettings {
   private float idleDuration = 1.5f;
   private float killRadius = 3f;
 
-  private float idleSpeed = 0.1f;
+  private float idleSpeed = 0.03f;
   private float slowedSpeed = 0.01f;
 
   private SoundSet trainSound = new SoundSet("trolley.train", 12f);

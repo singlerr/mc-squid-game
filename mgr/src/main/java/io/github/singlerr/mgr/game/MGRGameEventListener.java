@@ -1,10 +1,14 @@
 package io.github.singlerr.mgr.game;
 
+import io.github.singlerr.sg.core.GameCore;
 import io.github.singlerr.sg.core.context.GameContext;
 import io.github.singlerr.sg.core.context.GamePlayer;
 import io.github.singlerr.sg.core.context.GameRole;
 import io.github.singlerr.sg.core.events.GameEventListener;
 import io.github.singlerr.sg.core.utils.EntitySerializable;
+import io.github.singlerr.sg.core.utils.PlayerUtils;
+import java.util.Collection;
+import java.util.Date;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.kyori.adventure.text.Component;
@@ -15,6 +19,7 @@ import org.bukkit.boss.BarColor;
 import org.bukkit.boss.BarStyle;
 import org.bukkit.boss.BossBar;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Display;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.slf4j.helpers.MessageFormatter;
@@ -29,11 +34,12 @@ public final class MGRGameEventListener implements GameEventListener {
 
   @Override
   public void onJoin(GameContext context, GamePlayer player) {
-    if (player.getRole().getLevel() <= GameRole.TROY.getLevel()) {
-      context.syncName(player, GameRole.ADMIN);
-    } else {
-      context.syncNameLowerThan(GameRole.TROY.getLevel(), player);
+    if (!player.available()) {
+      return;
     }
+    player.getPlayer().setCustomNameVisible(true);
+    context.syncName(player, context.getPlayers());
+    context.syncName(context.getPlayers(), player);
   }
 
   @Override
@@ -47,6 +53,9 @@ public final class MGRGameEventListener implements GameEventListener {
             NamedTextColor.RED))));
       }
     }
+    if (GameCore.getInstance().shouldBan()) {
+      player.getPlayer().ban("오징어게임에서 탈락했습니다!", (Date) null, "", true);
+    }
   }
 
   @Override
@@ -59,6 +68,12 @@ public final class MGRGameEventListener implements GameEventListener {
     gameContext.getInterpolator().tick(currentTime);
     if (gameContext.getGameStatus() == MGRGameStatus.IDLE) {
       return;
+    }
+
+    if (gameContext.rotatePlayer()) {
+      for (Mount mount : gameContext.getMountList().values()) {
+        mount.tick();
+      }
     }
 
     if (gameContext.getGameStatus() == MGRGameStatus.JOINING_ROOM) {
@@ -80,7 +95,8 @@ public final class MGRGameEventListener implements GameEventListener {
         int minute = secs / 60;
         int seconds = secs % 60;
         joiningTimeIndicator.setTitle("남은 시간: " + minute + "분 " + seconds + "초");
-        joiningTimeIndicator.setProgress((float) timeRemaining / (float) joiningRoomTime);
+        joiningTimeIndicator.setProgress(
+            Math.min((float) timeRemaining / (float) joiningRoomTime, 1f));
       }
     }
   }
@@ -88,9 +104,11 @@ public final class MGRGameEventListener implements GameEventListener {
   @Override
   public void onStart(GameContext context) {
     MGRGameSettings settings = ((MGRGameContext) context).getGameSettings();
+    MGRGameContext ctx = (MGRGameContext) context;
     if (settings.getPillarEntity() != null) {
       Entity e = settings.getPillarEntity().toEntity();
-      ((MGRGameContext) context).setPillar(e);
+      ctx.setPillar(e);
+      ctx.setInitialPos(ctx.getDisplay(e).getTransformation().getTranslation());
     }
 
   }
@@ -102,6 +120,19 @@ public final class MGRGameEventListener implements GameEventListener {
       joiningTimeIndicator.setVisible(false);
       joiningTimeIndicator = null;
     }
+
+    Collection<Player> admins =
+        context.getPlayers(GameRole.ADMIN).stream().filter(GamePlayer::available)
+            .map(GamePlayer::getPlayer).toList();
+
+    for (GamePlayer player : context.getPlayers(GameRole.TROY.getLevel())) {
+      if (!player.available()) {
+        continue;
+      }
+
+      PlayerUtils.setGlowing(player.getPlayer(), admins, false);
+    }
+
   }
 
   @Override
@@ -116,6 +147,8 @@ public final class MGRGameEventListener implements GameEventListener {
             context.getSettings()
                 .setPillarEntity(EntitySerializable.of(e));
             context.getSettings().setPillarLocation(e.getLocation());
+            Display d = game.getContext().getDisplay(e);
+            context.getSettings().setInitialPos(d.getTransformation().getTranslation());
           });
           infoCallback(sender, "이제 블레이즈 막대를 이용해 엔티티를 지정하세요.");
         } else if (type.equalsIgnoreCase("door")) {
@@ -168,6 +201,23 @@ public final class MGRGameEventListener implements GameEventListener {
       } else if (args[0].equalsIgnoreCase("close")) {
         game.getContext().closeSession();
         infoCallback(sender, "게임 초기화");
+      } else if (args[0].equalsIgnoreCase("cleardoor")) {
+        game.getContext().getGameSettings().getDoors().clear();
+        infoCallback(sender, "{}", game.getContext().getGameSettings().getDoors());
+      } else if (args[0].equalsIgnoreCase("doors")) {
+        infoCallback(sender, "{}", game.getContext().getGameSettings().getDoors());
+      } else if (args[0].equalsIgnoreCase("clearroom")) {
+        game.getContext().getGameSettings().getDoors().clear();
+        infoCallback(sender, "{}", game.getContext().getGameSettings().getDoors());
+      } else if (args[0].equalsIgnoreCase("open")) {
+        String flag = args[1];
+        boolean f = false;
+        try {
+          f = Boolean.parseBoolean(flag);
+        } catch (Exception ignored) {
+        }
+        game.getContext().setDoorOpen(f);
+        infoCallback(sender, "문이 설정되었습니다 : {}", f);
       }
     }
   }

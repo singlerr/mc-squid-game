@@ -19,33 +19,32 @@ public class GamePlayer implements Comparable<GamePlayer> {
   private Component userDisplayName;
   private Component adminDisplayName;
 
+  private Gender gender;
   private int userNumber;
 
-  public GamePlayer(Player player, GameRole role) {
+  public GamePlayer(Player player, GameRole role, Gender gender) {
     this(player.getUniqueId(), player, role, Component.text(player.getName()),
-        Component.text(player.getName()), 0);
+        Component.text(player.getName()), gender, 0);
 
     if (role.getLevel() >= GameRole.ADMIN.getLevel()) {
       setUserDisplayName(Component.text("?"));
     }
   }
 
-  public static GamePlayer ofUser(Player player) {
-    return new GamePlayer(player, GameRole.USER);
+  public static GamePlayer ofUser(Player player, Gender gender) {
+    return new GamePlayer(player, GameRole.USER, gender);
   }
 
-  public static GamePlayer ofAdmin(Player player) {
-    return new GamePlayer(player, GameRole.ADMIN);
+  public static GamePlayer ofAdmin(Player player, Gender gender) {
+    return new GamePlayer(player, GameRole.ADMIN, gender);
   }
 
-  public static GamePlayer ofTroy(Player player) {
-    return new GamePlayer(player, GameRole.TROY);
+  public static GamePlayer ofTroy(Player player, Gender gender) {
+    return new GamePlayer(player, GameRole.TROY, gender);
   }
 
   public boolean available() {
-    if (player == null) {
-      player = Bukkit.getPlayer(id);
-    }
+    player = Bukkit.getPlayer(id);
     return player != null;
   }
 

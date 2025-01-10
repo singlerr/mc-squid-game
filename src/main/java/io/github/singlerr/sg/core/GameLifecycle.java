@@ -96,6 +96,8 @@ public final class GameLifecycle extends BukkitRunnable {
       context.setId(id);
       currentGame = new GameInfo(id, game, context, eventBus, minecraftListeners);
       eventBus.postGameStart(context);
+
+      GameHistoryRecorder.recordGame(id, context);
     }
   }
 

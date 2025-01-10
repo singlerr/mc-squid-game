@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 import lombok.Data;
 import org.bukkit.Location;
+import org.joml.Vector3f;
 
 @Data
 public final class MGRGameSettings implements GameSettings {
@@ -20,8 +21,12 @@ public final class MGRGameSettings implements GameSettings {
   private Location pillarLocation;
   private float curtainDelay = 5f;
   private float curtainRadius = 15f;
-  private float curtainMoveDistance = 1f;
+  private float curtainOffset = 8f;
+  private float curtainMoveDistance = 5f;
   private float joiningRoomTime = 30f;
+
+
+  private Vector3f initialPos;
 
   public MGRGameSettings() {
     setupAnnouncerSounds();
@@ -44,5 +49,7 @@ public final class MGRGameSettings implements GameSettings {
     curtainRadius = o.curtainRadius;
     joiningRoomTime = o.joiningRoomTime;
     pillarLocation = o.pillarLocation;
+    initialPos = o.initialPos;
+    curtainOffset = o.curtainOffset;
   }
 }

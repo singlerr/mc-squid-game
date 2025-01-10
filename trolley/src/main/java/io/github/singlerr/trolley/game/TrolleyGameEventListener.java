@@ -1,9 +1,11 @@
 package io.github.singlerr.trolley.game;
 
+import io.github.singlerr.sg.core.GameCore;
 import io.github.singlerr.sg.core.context.GameContext;
 import io.github.singlerr.sg.core.context.GamePlayer;
 import io.github.singlerr.sg.core.context.GameRole;
 import io.github.singlerr.sg.core.events.GameEventListener;
+import java.util.Date;
 import lombok.RequiredArgsConstructor;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -19,7 +21,12 @@ public final class TrolleyGameEventListener implements GameEventListener {
 
   @Override
   public void onJoin(GameContext context, GamePlayer player) {
-
+    if (!player.available()) {
+      return;
+    }
+    player.getPlayer().setCustomNameVisible(true);
+    context.syncName(player, context.getPlayers());
+    context.syncName(context.getPlayers(), player);
   }
 
   @Override
@@ -32,6 +39,9 @@ public final class TrolleyGameEventListener implements GameEventListener {
         p.sendMessage(player.getAdminDisplayName().append(Component.text(" 탈락").style(Style.style(
             NamedTextColor.RED))));
       }
+    }
+    if (GameCore.getInstance().shouldBan()) {
+      player.getPlayer().ban("오징어게임에서 탈락했습니다!", (Date) null, "", true);
     }
   }
 
@@ -63,7 +73,7 @@ public final class TrolleyGameEventListener implements GameEventListener {
       if (!player.available()) {
         continue;
       }
-      player.getPlayer().setWalkSpeed(ctx.getGameSettings().getIdleSpeed());
+      player.getPlayer().setWalkSpeed(0.2f);
     }
   }
 

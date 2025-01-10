@@ -59,6 +59,7 @@ public final class TrainEntity {
         display.setTeleportDuration(0);
         Transformation t = display.getTransformation();
         originalTranslation = t.getTranslation();
+        display.teleport(startPoint);
         entity.addPassenger(display);
       }
     } else {
@@ -70,9 +71,11 @@ public final class TrainEntity {
         display.setInterpolationDuration(0);
         display.setTeleportDuration(0);
         Transformation t = display.getTransformation();
+        display.teleport(startPoint);
         originalTranslation = t.getTranslation();
       }
     }
+
   }
 
   public void tick(long time) {
@@ -105,7 +108,7 @@ public final class TrainEntity {
     Location loc = startPoint.clone().add(direction.clone().setY(0).multiply(p));
 
     List<Entity> players =
-        entity.getWorld().getNearbyEntities(loc, radius, radius, radius).stream().filter(
+        entity.getWorld().getNearbyEntities(loc, radius, radius + 2, radius).stream().filter(
                 e -> context.getPlayer(e.getUniqueId()) != null &&
                     context.getPlayer(e.getUniqueId()).getRole().getLevel() <= GameRole.TROY.getLevel())
             .toList();

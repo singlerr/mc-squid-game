@@ -3,6 +3,7 @@ package io.github.singlerr.intermediary;
 import io.github.singlerr.intermediary.game.IntermediaryGame;
 import io.github.singlerr.sg.core.GameRegistry;
 import io.github.singlerr.sg.core.network.NetworkRegistry;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -10,7 +11,15 @@ import org.bukkit.plugin.java.JavaPlugin;
 @Slf4j
 public final class Intermediary extends JavaPlugin {
 
+  @Getter
+  private static Intermediary instance;
+
+
   private IntermediaryGame game;
+
+  public Intermediary() {
+    instance = this;
+  }
 
   @Override
   public void onEnable() {

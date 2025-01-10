@@ -5,18 +5,68 @@ import io.github.singlerr.dalgona.game.DalgonaGameContext;
 import io.github.singlerr.dalgona.game.DalgonaGameSettings;
 import io.github.singlerr.dalgona.game.DalgonaGameStatus;
 import io.github.singlerr.dalgona.game.PlayerDalgonaStatus;
+import io.github.singlerr.sg.core.GameCore;
+import io.github.singlerr.sg.core.context.GameContext;
 import io.github.singlerr.sg.core.context.GamePlayer;
+import io.github.singlerr.sg.core.context.GameRole;
 import io.github.singlerr.sg.core.utils.InteractableListener;
+import io.papermc.paper.event.player.AsyncChatEvent;
 import lombok.AllArgsConstructor;
+import net.kyori.adventure.text.Component;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
 
 @AllArgsConstructor
 public final class DalgonaEventListener extends InteractableListener {
 
   private final DalgonaGame game;
+
+  @EventHandler
+  public void onJoin(PlayerJoinEvent event) {
+    if (game == null || game.getContext() == null) {
+      return;
+    }
+    GameContext context = game.getContext();
+    GamePlayer player = context.getPlayer(event.getPlayer().getUniqueId());
+    if (player == null) {
+      return;
+    }
+    Bukkit.getScheduler().scheduleSyncDelayedTask(GameCore.getInstance(), () -> {
+
+      if (!player.available()) {
+        return;
+      }
+      player.getPlayer().setCustomNameVisible(true);
+      context.syncName(player, context.getPlayers());
+      context.syncName(context.getPlayers(), player);
+    }, 20L);
+  }
+
+
+  @EventHandler
+  public void onChat(AsyncChatEvent event) {
+    GameContext context = game.getContext();
+    GamePlayer player = context.getPlayer(event.getPlayer().getUniqueId());
+    if (player == null) {
+      return;
+    }
+
+    for (GamePlayer p : context.getPlayers()) {
+      if (!p.available()) {
+        continue;
+      }
+      Component prefix =
+          p.getRole().getLevel() >= GameRole.ADMIN.getLevel() ? player.getAdminDisplayName() :
+              player.getUserDisplayName();
+      p.sendMessage(prefix.append(Component.text(" : ")).append(event.message()));
+    }
+
+    event.setCancelled(true);
+  }
 
   @EventHandler
   public void onInteract(PlayerInteractEvent event) {
@@ -48,11 +98,11 @@ public final class DalgonaEventListener extends InteractableListener {
     }
 
     PlayerDalgonaStatus status;
-    if ((status = context.getStatus(gamePlayer.getId())) == null) {
+    if ((status = context.getPlayerStatus(gamePlayer.getId())) == null) {
       return;
     }
 
-    if (status != PlayerDalgonaStatus.IDLE) {
+    if (status == PlayerDalgonaStatus.SUCCESS) {
       return;
     }
 

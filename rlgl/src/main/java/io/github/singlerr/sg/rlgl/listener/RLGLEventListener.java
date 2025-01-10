@@ -1,5 +1,7 @@
 package io.github.singlerr.sg.rlgl.listener;
 
+import io.github.singlerr.sg.core.GameCore;
+import io.github.singlerr.sg.core.context.GameContext;
 import io.github.singlerr.sg.core.context.GamePlayer;
 import io.github.singlerr.sg.core.context.GameRole;
 import io.github.singlerr.sg.core.utils.InteractableListener;
@@ -9,11 +11,13 @@ import io.github.singlerr.sg.rlgl.game.RLGLGameContext;
 import io.github.singlerr.sg.rlgl.game.RLGLGameSettings;
 import io.github.singlerr.sg.rlgl.game.RLGLItemRole;
 import io.github.singlerr.sg.rlgl.game.RLGLStatus;
+import io.papermc.paper.event.player.AsyncChatEvent;
 import java.util.Collection;
 import lombok.extern.slf4j.Slf4j;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.Style;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.block.Action;
@@ -77,6 +81,27 @@ public final class RLGLEventListener extends InteractableListener {
   }
 
   @EventHandler
+  public void onChat(AsyncChatEvent event) {
+    GameContext context = game.getGameContext();
+    GamePlayer player = context.getPlayer(event.getPlayer().getUniqueId());
+    if (player == null) {
+      return;
+    }
+
+    for (GamePlayer p : context.getPlayers()) {
+      if (!p.available()) {
+        continue;
+      }
+      Component prefix =
+          p.getRole().getLevel() >= GameRole.ADMIN.getLevel() ? player.getAdminDisplayName() :
+              player.getUserDisplayName();
+      p.sendMessage(prefix.append(Component.text(" : ")).append(event.message()));
+    }
+
+    event.setCancelled(true);
+  }
+
+  @EventHandler
   public void onQuit(PlayerDeathEvent event) {
     Player player = event.getPlayer();
     GamePlayer gamePlayer;
@@ -85,9 +110,9 @@ public final class RLGLEventListener extends InteractableListener {
     }
   }
 
-
   @EventHandler
-  public void onJoin(PlayerJoinEvent event) {
+  public void removeDeathMessage(PlayerDeathEvent event) {
+    event.deathMessage(null);
   }
 
   @EventHandler
@@ -120,8 +145,29 @@ public final class RLGLEventListener extends InteractableListener {
     }
 
     itemRole.execute(game.getGameContext(), player);
-    infoCallback(player.getPlayer(), "실행: {}", itemRole.getDisplayName().getString());
+    infoCallback(event.getPlayer(), "실행: {}", itemRole.getDisplayName().getString());
     event.setCancelled(true);
+  }
+
+  @EventHandler
+  public void onJoin(PlayerJoinEvent event) {
+    if (game == null || game.getGameContext() == null) {
+      return;
+    }
+    GameContext context = game.getGameContext();
+    GamePlayer player = context.getPlayer(event.getPlayer().getUniqueId());
+    if (player == null) {
+      return;
+    }
+    Bukkit.getScheduler().scheduleSyncDelayedTask(GameCore.getInstance(), () -> {
+
+      if (!player.available()) {
+        return;
+      }
+      player.getPlayer().setCustomNameVisible(true);
+      context.syncName(player, context.getPlayers());
+      context.syncName(context.getPlayers(), player);
+    }, 20L);
   }
 
 }

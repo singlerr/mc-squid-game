@@ -44,7 +44,7 @@ public final class Admin extends JavaPlugin {
       log.error("Failed to load entities.json", e);
       getServer().getPluginManager().disablePlugin(this);
     }
-    getServer().getPluginManager().registerEvents(new EventListener(), this);
+    getServer().getPluginManager().registerEvents(new EventListener(this), this);
     getCommand("mgw").setExecutor(new MagicWandCommand());
     registerPackets();
   }

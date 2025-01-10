@@ -17,11 +17,13 @@ public final class PacketGameInfo implements Packet {
   public static final String ID = "sgadmin:game_info";
 
   private String currentGameId;
+  private GameHistory currentGameInfo;
   private List<GameHistory> games;
 
   @Override
   public void writePayload(FriendlyByteBuf buffer) {
     buffer.writeUtf(currentGameId);
+    writeGame(currentGameInfo, buffer);
     buffer.writeInt(games.size());
     for (GameHistory game : games) {
       writeGame(game, buffer);
@@ -41,6 +43,7 @@ public final class PacketGameInfo implements Packet {
   @Override
   public void readPayload(FriendlyByteBuf buffer) {
     currentGameId = buffer.readUtf();
+    currentGameInfo = readGame(buffer);
     int size = buffer.readInt();
     List<GameHistory> games = new ArrayList<>(size);
     for (int i = 0; i < size; i++) {

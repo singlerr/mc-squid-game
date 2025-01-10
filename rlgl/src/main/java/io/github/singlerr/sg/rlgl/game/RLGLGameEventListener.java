@@ -1,14 +1,15 @@
 package io.github.singlerr.sg.rlgl.game;
 
+import io.github.singlerr.sg.core.GameCore;
 import io.github.singlerr.sg.core.context.GameContext;
 import io.github.singlerr.sg.core.context.GamePlayer;
 import io.github.singlerr.sg.core.context.GameRole;
 import io.github.singlerr.sg.core.events.GameEventListener;
 import io.github.singlerr.sg.core.network.NetworkRegistry;
 import io.github.singlerr.sg.core.network.packets.PacketInitModel;
-import io.github.singlerr.sg.core.utils.ModelUtils;
 import io.github.singlerr.sg.core.utils.PlayerUtils;
 import java.util.Collection;
+import java.util.Date;
 import lombok.extern.slf4j.Slf4j;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -49,6 +50,10 @@ public class RLGLGameEventListener implements GameEventListener {
           Bukkit.getServicesManager().getRegistration(NetworkRegistry.class).getProvider();
       network.getChannel().sendTo(player.getPlayer(), pkt);
     }
+
+    player.getPlayer().setCustomNameVisible(true);
+    context.syncName(player, context.getPlayers());
+    context.syncName(context.getPlayers(), player);
   }
 
   @Override
@@ -61,6 +66,9 @@ public class RLGLGameEventListener implements GameEventListener {
         p.sendMessage(player.getAdminDisplayName().append(Component.text(" 탈락").style(Style.style(
             NamedTextColor.RED))));
       }
+    }
+    if (GameCore.getInstance().shouldBan()) {
+      player.getPlayer().ban("오징어게임에서 탈락했습니다!", (Date) null, "", true);
     }
   }
 
@@ -100,7 +108,6 @@ public class RLGLGameEventListener implements GameEventListener {
           younghee.getPassengers().stream().filter(e -> e instanceof Display).map(e -> (Display) e)
               .findAny().orElse(null);
       ctx.setYoungHee(younghee);
-      ModelUtils.setModel(younghee, settings.getModelLocation());
     }
     timeIndicator = Bukkit.createBossBar("", BarColor.RED, BarStyle.SOLID);
     ctx.getPlayers().stream().filter(GamePlayer::available).map(GamePlayer::getPlayer)
@@ -120,7 +127,11 @@ public class RLGLGameEventListener implements GameEventListener {
     Collection<Player> admin = ctx.getPlayers(GameRole.ADMIN).stream().filter(GamePlayer::available)
         .map(GamePlayer::getPlayer).toList();
     for (GamePlayer player : ctx.getPlayers(GameRole.TROY.getLevel())) {
+      if (!player.available()) {
+        continue;
+      }
       PlayerUtils.setGlowing(player.getPlayer(), admin, false);
+      player.getPlayer().setWalkSpeed(0.2f);
     }
   }
 

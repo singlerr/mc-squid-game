@@ -16,27 +16,30 @@ import org.joml.Vector3f;
 public class RLGLGameSettings implements GameSettings {
 
   private float killSwitch = 0.1f;
-  private int time = 30 * 60;
+  private int time = 5 * 60;
   private Region deadRegion = new Region(null, null);
 
   private float startDelay = 1f;
   private float greenLightTurnDelay = 3f;
   private float redLightTurnDelay = 3f;
 
-  private SoundSet soundOne = new SoundSet("rlgl.preset1", 5.0f);
+  private SoundSet soundOne = new SoundSet("rlgl.preset1", 4.0f);
   private SoundSet soundTwo = new SoundSet("rlgl.preset2", 5.0f);
   private SoundSet soundThree = new SoundSet("rlgl.preset3", 5.0f);
-  private SoundSet soundFour = new SoundSet("rlgl.preset4", 5.0f);
+  private SoundSet soundFour = new SoundSet("rlgl.preset4", 6.0f);
   private SoundSet soundFive = new SoundSet("rlgl.preset5", 8.0f);
+  private SoundSet transitionSound = new SoundSet("rlgl.transition", 5f);
 
+  private float playerSpeed = 0.1f;
 
   private Transform backState =
       new Transform(null, new Quaternionf().rotationXYZ(0, 0, Mth.PI), new Vector3f(10));
   private Transform frontState =
       new Transform(null, new Quaternionf().rotationXYZ(0, 0, 0), new Vector3f(10));
 
-  private String startSound = "broadcast.start";
+  private String startSound = "rlgl.broadcast_start_";
   private EntitySerializable youngHee = new EntitySerializable();
+  private Quaternionf originalRot = new Quaternionf();
 
   private float scaleX = 1.0f;
   private float scaleY = 1.0f;
@@ -57,6 +60,8 @@ public class RLGLGameSettings implements GameSettings {
     this.soundFour = settings.soundFour;
     this.soundFive = settings.soundFive;
     this.startSound = settings.startSound;
+    this.transitionSound = settings.transitionSound;
+    this.playerSpeed = settings.playerSpeed;
     this.youngHee = settings.youngHee;
     this.scaleX = settings.scaleX;
     this.scaleY = settings.scaleY;

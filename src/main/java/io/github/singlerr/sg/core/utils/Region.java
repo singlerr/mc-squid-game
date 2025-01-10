@@ -16,6 +16,9 @@ public class Region {
   }
 
   public boolean contains(double x, double y, double z) {
+    if (start == null || end == null) {
+      return false;
+    }
     double x1 = Math.min(start.x(), end.x());
     double x2 = Math.max(start.x(), end.x());
     double y1 = Math.min(start.y(), end.y());

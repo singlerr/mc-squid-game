@@ -7,19 +7,25 @@ import io.github.singlerr.sg.core.context.GameRole;
 import io.github.singlerr.sg.core.context.GameStatus;
 import io.github.singlerr.sg.core.setup.GameSettings;
 import io.github.singlerr.sg.core.utils.Interpolator;
+import io.github.singlerr.sg.core.utils.PlayerUtils;
 import io.github.singlerr.sg.core.utils.Region;
 import io.github.singlerr.sg.core.utils.SoundSet;
 import io.github.singlerr.sg.core.utils.TaskScheduler;
 import io.github.singlerr.sg.core.utils.TickableSoundPlayer;
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.sound.SoundStop;
@@ -30,15 +36,15 @@ import net.kyori.adventure.text.format.Style;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.block.Block;
-import org.bukkit.block.data.type.Door;
+import org.bukkit.block.data.Openable;
 import org.bukkit.entity.Display;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.util.BoundingBox;
 import org.bukkit.util.Transformation;
-import org.bukkit.util.Vector;
 import org.joml.Vector3f;
 
 @Slf4j
@@ -58,6 +64,15 @@ public final class MGRGameContext extends GameContext {
 
   private Set<Location> barrierCache;
 
+  private Vector3f initialPos;
+
+  private Map<Integer, AtomicInteger> playerCounts;
+
+  private Map<UUID, Mount> mountList;
+
+  @Accessors(fluent = true)
+  private boolean rotatePlayer;
+
   public MGRGameContext(Map<UUID, GamePlayer> players,
                         GameStatus status,
                         GameEventBus eventBus,
@@ -68,6 +83,9 @@ public final class MGRGameContext extends GameContext {
     this.random = new SecureRandom();
     this.barrierCache = new HashSet<>();
     this.interpolator = new Interpolator();
+    this.playerCounts = Collections.synchronizedMap(new HashMap<>());
+    this.mountList = Collections.synchronizedMap(new HashMap<>());
+    this.rotatePlayer = false;
   }
 
   public Display getDisplay(Entity entity) {
@@ -88,34 +106,86 @@ public final class MGRGameContext extends GameContext {
   }
 
   public void startNewSession(int playerCount) {
+    // setup player counting system per rooms
+    playerCounts.clear();
+    for (Integer i : getGameSettings().getRooms().keySet()) {
+      playerCounts.put(i, new AtomicInteger(0));
+    }
+
+    // remove glowing
+    Collection<Player> admins =
+        getPlayers(GameRole.ADMIN).stream().filter(GamePlayer::available).map(GamePlayer::getPlayer)
+            .toList();
+    for (GamePlayer target : getPlayers(GameRole.TROY.getLevel())) {
+      if (!target.available()) {
+        continue;
+      }
+      PlayerUtils.setGlowing(target.getPlayer(), admins, false);
+    }
+
+    // setup mounts
+    float rotationSpeed = 0.01f;
+    setupMounts(rotationSpeed);
+
+    // set game status
     gameStatus = MGRGameStatus.PLAYING_MUSIC;
     this.playerCount = playerCount;
     int offset = random.nextInt(2) - 1;
+
+
+    // create barrier
     setBarrier();
-    Location origin = pillar.getLocation().clone();
-    move(getDisplay(pillar), getGameSettings().getPillarLocation().toVector().toVector3f()
-            .sub(pillar.getLocation().toVector().toVector3f()).negate(),
-        (int) (getGameSettings().getCurtainDelay() * 20));
-    interpolator.add((long) (getGameSettings().getCurtainDelay() * 1000), p -> {
-      if ((int) (pillar.getLocation().distance(getGameSettings().getPillarLocation())) <= 0) {
-        return;
-      }
-      float newY = getGameSettings().getCurtainMoveDistance() * p;
-      pillar.teleport(origin.clone().subtract(0, newY, 0));
-    });
+
+    // move curtain upwards
+    Vector3f pos = new Vector3f();
+    initialPos = new Vector3f(getGameSettings().getInitialPos());
+    initialPos.get(pos);
+    Display pillarDisplay = getDisplay(pillar);
+    move(pillarDisplay, pos.sub(pillarDisplay.getTransformation().getTranslation()),
+        (int) (getGameSettings().getCurtainDelay() * 20)); // move pillar downwards
+
+    // start rotating curtains
     scheduler.enqueue((long) (getGameSettings().getCurtainDelay() * 1000), () -> {
       SoundSet music = getGameSettings().getMusicSound();
-
-      interpolator.add((long) (music.getDuration() * 1000), (progress) -> {
-        float angle = (float) (progress * Math.PI * 4);
-        rotate(getDisplay(pillar), angle, 0);
-      });
+      rotatePlayer(true);
+      interpolator.add((long) ((getGameSettings().getJoiningRoomTime() + offset - 1) * 1000),
+          (progress) -> {
+            float angle = (float) (progress * Math.PI * 4);
+            rotate(pillarDisplay, angle, 0);
+          });
       this.soundPlayer.enqueue(getPlayers(), music.getSound(),
-          getGameSettings().getJoiningRoomTime() - offset, () -> {
+          getGameSettings().getJoiningRoomTime() + offset, () -> {
             Bukkit.getServer().stopSound(SoundStop.named(Key.key(music.getSound())));
             openCurtain();
           });
     });
+  }
+
+  private void setupMounts(float rotationSpeed) {
+    List<GamePlayer> players = getPlayers(GameRole.TROY.getLevel());
+    Collections.shuffle(players);
+    float radius = getGameSettings().getCurtainRadius() - getGameSettings().getCurtainOffset() -
+        random.nextInt(2);
+
+    float angleRatio = 360f / players.size();
+    float angle = 0;
+    Vector3f center = getPillar().getLocation().toVector().toVector3f();
+    for (GamePlayer player : players) {
+      if (!player.available()) {
+        continue;
+      }
+
+      float radian = (float) Math.toRadians(angle);
+      Vector3f playerPos =
+          new Vector3f((float) (radius * Math.cos(radian)), 0, (float) (radius * Math.sin(radian)));
+      playerPos.add(center);
+      Location loc = new Location(getPillar().getWorld(), playerPos.x, playerPos.y, playerPos.z);
+      player.getPlayer().teleport(loc);
+
+      Mount mount = new Mount(player, center, rotationSpeed);
+      mountList.put(player.getId(), mount);
+      angle += angleRatio;
+    }
   }
 
   private void rotate(Display display, float angle, float duration) {
@@ -128,16 +198,10 @@ public final class MGRGameContext extends GameContext {
   }
 
   public void openCurtain() {
+    rotatePlayer(false);
     gameStatus = MGRGameStatus.OPENING_CURTAIN;
-    Location origin = pillar.getLocation().clone();
-    move(getDisplay(pillar), pillar.getLocation().toVector()
-            .add(new Vector(0, getGameSettings().getCurtainMoveDistance(), 0)).toVector3f()
-            .sub(pillar.getLocation().toVector().toVector3f()),
-        (int) (getGameSettings().getCurtainDelay() * 20));
-    interpolator.add((long) (getGameSettings().getCurtainDelay() * 1000), p -> {
-      float newY = getGameSettings().getCurtainMoveDistance() * p;
-      pillar.teleport(origin.clone().add(new Vector(0, newY, 0)));
-    }); // move curtain entity upwards
+    move(getDisplay(pillar), new Vector3f(0, getGameSettings().getCurtainMoveDistance(), 0),
+        (int) (getGameSettings().getCurtainDelay() * 20));// move curtain entity upwards
     scheduler.enqueue((long) (getGameSettings().getCurtainDelay() * 1000L), () -> {
       SoundSet set = getGameSettings().getAnnouncerSounds().get(playerCount);
       if (set == null) {
@@ -150,18 +214,40 @@ public final class MGRGameContext extends GameContext {
     });
   }
 
-  private void setDoorOpen(boolean flag) {
+  public void setDoorOpen(boolean flag) {
+    Sound sound = flag ? Sound.BLOCK_IRON_DOOR_OPEN : Sound.BLOCK_IRON_DOOR_CLOSE;
     for (Location loc : getGameSettings().getDoors().values()) {
       Block b = loc.getBlock();
-      if (b.getBlockData() instanceof Door door) {
+      if (b.getBlockData() instanceof Openable door) {
+
         door.setOpen(flag);
         b.setBlockData(door);
         b.getState().update(true);
+        b.getWorld().playSound(b.getLocation(), sound, 1.0f, 1.0f);
       }
     }
   }
 
+  public void setDoorOpen(Block b, boolean flag) {
+    if (b.getBlockData() instanceof Openable door) {
+      Sound sound = flag ? Sound.BLOCK_IRON_DOOR_OPEN : Sound.BLOCK_IRON_DOOR_CLOSE;
+      door.setOpen(flag);
+      b.setBlockData(door);
+      b.getState().update(true);
+      b.getWorld().playSound(b.getLocation(), sound, 1.0f, 1.0f);
+    }
+  }
+
+  private void removeMounts() {
+    for (Mount m : mountList.values()) {
+      m.remove();
+    }
+
+    mountList.clear();
+  }
+
   public void startJoiningRoom() {
+    removeMounts();
     gameStatus = MGRGameStatus.JOINING_ROOM;
     joiningStartedTime = System.currentTimeMillis();
     removeBarrier();
@@ -177,8 +263,15 @@ public final class MGRGameContext extends GameContext {
         .entrySet()) {
       int roomNum = entry.getKey();
       Region roomRegion = entry.getValue();
-      int count = getRoomPlayerCount(roomRegion);
+      Collection<Entity> playersInRoom = getRoomPlayers(roomRegion);
+      int count = playersInRoom.size();
       if (playerCount != count) {
+        Collection<Player> admins =
+            getPlayers(GameRole.ADMIN).stream().filter(GamePlayer::available)
+                .map(GamePlayer::getPlayer).toList();
+        for (Entity entity : playersInRoom) {
+          PlayerUtils.setGlowing((Player) entity, admins, true);
+        }
         failed.add(Component.text(roomNum + "번").append(Component.text("(" + count + "명)")));
       } else {
         success.add(Component.text(roomNum + "번").append(Component.text("(" + count + "명)")));
@@ -193,17 +286,9 @@ public final class MGRGameContext extends GameContext {
   }
 
   public void closeSession() {
-    float distPerTick = getGameSettings().getCurtainMoveDistance() /
-        (getGameSettings().getCurtainDelay() * 1000);
     move(getDisplay(pillar), getGameSettings().getPillarLocation().toVector().toVector3f()
             .sub(pillar.getLocation().toVector().toVector3f()),
         (int) (getGameSettings().getCurtainDelay() * 20));
-    interpolator.add((long) (getGameSettings().getCurtainDelay() * 1000), p -> {
-      if (pillar.getLocation().distance(getGameSettings().getPillarLocation()) < 1) {
-        return;
-      }
-      pillar.setVelocity(new Vector(0, -distPerTick, 0));
-    });
     scheduler.enqueue((long) (getGameSettings().getCurtainDelay() * 1000), () -> {
       gameStatus = MGRGameStatus.IDLE;
       setBarrier();
@@ -257,11 +342,12 @@ public final class MGRGameContext extends GameContext {
     locations.forEach(l -> l.getBlock().setType(type));
   }
 
-  private int getRoomPlayerCount(Region region) {
+  private Collection<Entity> getRoomPlayers(Region region) {
     World world = region.getStart().getWorld();
     BoundingBox range =
-        new BoundingBox(region.getStart().x(), region.getStart().y(), region.getStart().z(),
-            region.getEnd().x(), region.getEnd().y(), region.getEnd().z());
+        new BoundingBox(region.getStart().getBlockX(), region.getStart().getBlockY(),
+            region.getStart().getBlockZ(),
+            region.getEnd().getBlockX(), region.getEnd().getBlockY(), region.getEnd().getBlockZ());
     return world.getNearbyEntities(range, entity -> {
       if (!(entity instanceof Player player)) {
         return false;
@@ -271,6 +357,6 @@ public final class MGRGameContext extends GameContext {
         return false;
       }
       return gamePlayer.getRole().getLevel() <= GameRole.TROY.getLevel();
-    }).size();
+    });
   }
 }

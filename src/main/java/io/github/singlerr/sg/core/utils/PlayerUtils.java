@@ -3,6 +3,7 @@ package io.github.singlerr.sg.core.utils;
 import io.github.singlerr.sg.core.GameCore;
 import io.github.singlerr.sg.core.context.GamePlayer;
 import io.github.singlerr.sg.core.context.GameRole;
+import io.github.singlerr.sg.core.context.Gender;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -21,6 +22,7 @@ import net.skinsrestorer.api.SkinsRestorerProvider;
 import net.skinsrestorer.api.exception.DataRequestException;
 import net.skinsrestorer.api.exception.MineSkinException;
 import net.skinsrestorer.api.property.InputDataResult;
+import net.skinsrestorer.api.property.SkinVariant;
 import net.skinsrestorer.api.storage.PlayerStorage;
 import net.skinsrestorer.api.storage.SkinStorage;
 import org.bukkit.craftbukkit.v1_20_R3.entity.CraftPlayer;
@@ -41,13 +43,11 @@ public class PlayerUtils {
         .anyMatch(p -> p.getId().equals(player.getId()));
   }
 
-  public void changeSkin(Player player, GameRole role) {
-    if (role == GameRole.ADMIN) {
-      changeSkin(player, GameCore.getInstance().getAdminSkinUrl());
-    } else {
-      List<String> urls = GameCore.getInstance().getPlayerSkinUrl();
+  public void changeSkin(Player player, GameRole role, Gender gender) {
+    if (role.getLevel() <= GameRole.TROY.getLevel()) {
+      List<String> urls = GameCore.getInstance().getPlayerSkinUrl(gender == Gender.MALE);
       int idx = random.nextInt(urls.size());
-      changeSkin(player, urls.get(idx));
+      changeSkin(player, urls.get(idx), gender == Gender.FEMALE);
     }
   }
 
@@ -80,16 +80,31 @@ public class PlayerUtils {
     eData.add(SynchedEntityData.DataValue.create(
         new EntityDataAccessor<>(2, EntityDataSerializers.OPTIONAL_COMPONENT),
         Optional.ofNullable(net.minecraft.network.chat.Component.literal(displayName))));
-    eData.add(SynchedEntityData.DataValue.create(
-        new EntityDataAccessor<>(3, EntityDataSerializers.BOOLEAN), true));
     return new ClientboundSetEntityDataPacket(player.getEntityId(), eData);
   }
 
-  public void changeSkin(Player player, String skinUrl) {
+  public void loadSkin(String skinUrl, boolean slim) {
     SkinsRestorer api = SkinsRestorerProvider.get();
     SkinStorage storage = api.getSkinStorage();
     try {
-      Optional<InputDataResult> result = storage.findOrCreateSkinData(skinUrl);
+      Optional<InputDataResult> result =
+          storage.findOrCreateSkinData(skinUrl, slim ? SkinVariant.SLIM : SkinVariant.CLASSIC);
+      if (result.isEmpty()) {
+        log.error("Failed to load skin {}", skinUrl);
+      } else {
+        log.info("Loaded skin {}", skinUrl);
+      }
+    } catch (DataRequestException | MineSkinException e) {
+      log.error("Failed to apply skin", e);
+    }
+  }
+
+  public void changeSkin(Player player, String skinUrl, boolean slim) {
+    SkinsRestorer api = SkinsRestorerProvider.get();
+    SkinStorage storage = api.getSkinStorage();
+    try {
+      Optional<InputDataResult> result =
+          storage.findOrCreateSkinData(skinUrl, slim ? SkinVariant.SLIM : SkinVariant.CLASSIC);
       if (result.isEmpty()) {
         log.error("Failed to apply skin {}", skinUrl);
         return;
@@ -97,6 +112,7 @@ public class PlayerUtils {
 
       PlayerStorage playerStorage = api.getPlayerStorage();
       playerStorage.setSkinIdOfPlayer(player.getUniqueId(), result.get().getIdentifier());
+
       api.getSkinApplier(Player.class).applySkin(player);
       log.info("Changed {} skin to {}", player.getName(), skinUrl);
     } catch (DataRequestException | MineSkinException e) {

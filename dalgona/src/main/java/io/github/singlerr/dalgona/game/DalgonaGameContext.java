@@ -9,6 +9,7 @@ import io.github.singlerr.sg.core.context.GameRole;
 import io.github.singlerr.sg.core.context.GameStatus;
 import io.github.singlerr.sg.core.network.NetworkRegistry;
 import io.github.singlerr.sg.core.setup.GameSettings;
+import io.github.singlerr.sg.core.utils.PlayerUtils;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -27,10 +28,11 @@ import org.bukkit.inventory.meta.ItemMeta;
 
 public class DalgonaGameContext extends GameContext {
 
-  private final Map<UUID, PlayerDalgonaStatus> status;
+  private final Map<UUID, PlayerDalgonaStatus> playerStatusList;
 
   @Getter
-  private final Map<UUID, String> dalgonaImages;
+  private final Map<UUID, Dalgona> providedDalgonaList;
+
   private final SecureRandom random;
   @Getter
   @Setter
@@ -39,14 +41,19 @@ public class DalgonaGameContext extends GameContext {
   @Setter
   private long startTime;
 
+  @Getter
+  @Setter
+  private int cutoff;
+
+
   public DalgonaGameContext(Map<UUID, GamePlayer> players,
                             GameStatus status,
                             GameEventBus eventBus,
 
                             GameSettings settings) {
     super(players, status, eventBus, settings);
-    this.status = new HashMap<>();
-    this.dalgonaImages = new HashMap<>();
+    this.playerStatusList = new HashMap<>();
+    this.providedDalgonaList = new HashMap<>();
     this.random = new SecureRandom();
   }
 
@@ -54,16 +61,38 @@ public class DalgonaGameContext extends GameContext {
     return (DalgonaGameSettings) getSettings();
   }
 
+  public List<GamePlayer> getPlayers(PlayerDalgonaStatus status) {
+    return playerStatusList.entrySet().stream().filter(e -> {
+      GamePlayer p = getPlayer(e.getKey());
+      if (p == null) {
+        return false;
+      }
+      if (!p.available()) {
+        return false;
+      }
+      return e.getValue() == status;
+    }).map(e -> getPlayer(e.getKey())).toList();
+  }
+
   public void handleResult(Player player, PacketDalgonaResult packet) {
     if (gameStatus != DalgonaGameStatus.PROGRESS) {
       return;
     }
+
     GamePlayer p = getPlayer(player.getUniqueId());
     if (p == null) {
       return;
     }
 
-    status.computeIfPresent(player.getUniqueId(),
+    if (packet.isSuccess() &&
+        playerStatusList.values().stream().filter(st -> st == PlayerDalgonaStatus.SUCCESS).count() <
+            getCutoff()) {
+      PlayerUtils.setGlowing(player,
+          getPlayers(GameRole.ADMIN).stream().filter(GamePlayer::available)
+              .map(GamePlayer::getPlayer).toList(), true);
+    }
+
+    playerStatusList.computeIfPresent(player.getUniqueId(),
         (id, t) -> packet.isSuccess() ? PlayerDalgonaStatus.SUCCESS : PlayerDalgonaStatus.FAILURE);
     if (!packet.isSuccess()) {
       broadcast(
@@ -71,49 +100,55 @@ public class DalgonaGameContext extends GameContext {
               .style(
                   Style.style(NamedTextColor.RED)), GameRole.ADMIN);
     }
+
+
   }
 
-  public PlayerDalgonaStatus getStatus(UUID id) {
-    return status.get(id);
+  public PlayerDalgonaStatus getPlayerStatus(UUID id) {
+    return playerStatusList.get(id);
   }
 
-  public void startGame() {
+  public void startGame(int cutoff) {
+    setCutoff(cutoff);
     setGameStatus(DalgonaGameStatus.PROGRESS);
     setStartTime(System.currentTimeMillis());
   }
 
   public void provideDalgona() {
-    List<String> dalgonas = new ArrayList<>(getGameSettings().getDalgonaImages().values());
+    playerStatusList.clear();
+    providedDalgonaList.clear();
+
+    List<Dalgona> dalgonas = new ArrayList<>(getGameSettings().getDalgonaList().values());
     ItemStack dalgonaItem = new ItemStack(getGameSettings().getDalgonaType());
     ItemMeta meta = dalgonaItem.getItemMeta();
     meta.displayName(Component.text("달고나").style(Style.style(NamedTextColor.YELLOW)));
     dalgonaItem.setItemMeta(meta);
-    getGameSettings().getDalgonaImages().values();
     for (GamePlayer player : getPlayers()) {
       if (!player.available()) {
         continue;
       }
       if (player.getRole().getLevel() <= GameRole.TROY.getLevel()) {
-        String dalgona = dalgonas.get(random.nextInt(dalgonas.size()));
-        dalgonaImages.put(player.getPlayer().getUniqueId(), dalgona);
-        status.put(player.getId(), PlayerDalgonaStatus.IDLE);
+        Dalgona dalgona = dalgonas.get(random.nextInt(dalgonas.size()));
+        providedDalgonaList.put(player.getPlayer().getUniqueId(), dalgona);
+        playerStatusList.put(player.getId(), PlayerDalgonaStatus.IDLE);
         player.getPlayer().getInventory().addItem(dalgonaItem);
       }
     }
   }
 
   public void beginDalgona(Player player) {
-    if (!dalgonaImages.containsKey(player.getUniqueId())) {
+    if (!providedDalgonaList.containsKey(player.getUniqueId())) {
       return;
     }
-    String dalgonaImage = dalgonaImages.get(player.getUniqueId());
+    Dalgona dalgona = providedDalgonaList.get(player.getUniqueId());
     NetworkRegistry
         network = Bukkit.getServicesManager().getRegistration(NetworkRegistry.class).getProvider();
-    network.getChannel().sendTo(player, new PacketDalgonaRequest(dalgonaImage));
+    network.getChannel()
+        .sendTo(player, new PacketDalgonaRequest(dalgona.getImagePath(), dalgona.getThreshold()));
   }
 
   public void end() {
-    List<GamePlayer> failedPlayers = status.entrySet().stream()
+    List<GamePlayer> failedPlayers = playerStatusList.entrySet().stream()
         .filter(e -> getPlayer(e.getKey()) != null && e.getValue() != PlayerDalgonaStatus.SUCCESS)
         .map(e -> getPlayer(e.getKey())).toList();
     Component msg = Component.text("실패자: [");

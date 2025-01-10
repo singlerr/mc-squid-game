@@ -6,6 +6,7 @@ import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import net.minecraft.network.FriendlyByteBuf;
 
 @Data
@@ -15,14 +16,18 @@ public final class PacketPlayerInfoFragment implements Packet {
 
   public static final String ID = "sgadmin:player_info";
 
+  private int packetId;
   private String id;
   private List<GamePlayer> playerList;
-  private boolean last;
+  private int packetIndex;
+  private int packetCount;
 
   @Override
   public void writePayload(FriendlyByteBuf buffer) {
+    buffer.writeInt(packetCount);
+    buffer.writeInt(packetId);
     buffer.writeUtf(id);
-    buffer.writeBoolean(last);
+    buffer.writeInt(packetIndex);
     buffer.writeInt(playerList.size());
     for (GamePlayer p : playerList) {
       writeGamePlayer(p, buffer);
@@ -31,7 +36,8 @@ public final class PacketPlayerInfoFragment implements Packet {
 
   private void writeGamePlayer(GamePlayer player, FriendlyByteBuf buffer) {
     buffer.writeUUID(player.getId());
-    buffer.writeUtf(player.getUserDisplayName().toString());
+    buffer.writeUtf(
+        PlainTextComponentSerializer.plainText().serialize(player.getAdminDisplayName()));
     buffer.writeUtf(player.getRole().toString());
   }
 

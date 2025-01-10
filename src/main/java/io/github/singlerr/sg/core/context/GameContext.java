@@ -1,6 +1,6 @@
 package io.github.singlerr.sg.core.context;
 
-import com.mojang.authlib.GameProfile;
+import io.github.singlerr.sg.core.GameCore;
 import io.github.singlerr.sg.core.setup.GameSettings;
 import io.github.singlerr.sg.core.utils.PlayerUtils;
 import java.util.Collection;
@@ -9,10 +9,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import net.kyori.adventure.text.Component;
 import net.minecraft.Optionull;
 import net.minecraft.network.chat.RemoteChatSession;
@@ -23,9 +25,11 @@ import org.bukkit.GameMode;
 import org.bukkit.craftbukkit.v1_20_R3.entity.CraftPlayer;
 import org.bukkit.potion.PotionEffectType;
 
+@Slf4j
 @Getter
 public class GameContext {
 
+  private static AtomicInteger idCount = new AtomicInteger(0);
   private final Map<UUID, GamePlayer> players;
   @Getter(value = AccessLevel.NONE)
   private final GameEventBus eventBus;
@@ -55,7 +59,7 @@ public class GameContext {
     return players.values();
   }
 
-  public Collection<GamePlayer> getPlayers(int level) {
+  public List<GamePlayer> getPlayers(int level) {
     return getPlayers().stream().filter(p -> p.getRole().getLevel() <= level).toList();
   }
 
@@ -74,10 +78,12 @@ public class GameContext {
         player.getPlayer().addPotionEffect(PotionEffectType.INVISIBILITY.createEffect(9999, 1));
         player.getPlayer().addPotionEffect(PotionEffectType.BLINDNESS.createEffect(9999, 1));
         player.getPlayer().setGameMode(GameMode.CREATIVE);
+        PlayerUtils.changeSkin(player.getPlayer(), GameCore.getInstance().getAdminSkinUrl(), false);
       } else {
         players.remove(player.getId());
         eventBus.postGameExit(this, player);
       }
+
       return true;
     }
 
@@ -102,7 +108,7 @@ public class GameContext {
   }
 
   public void assignNumberName(GamePlayer player) {
-    int num = getPlayers().size();
+    int num = idCount.incrementAndGet();
     player.setUserDisplayName(Component.text(num));
     player.setAdminDisplayName(Component.text("[").append(player.getUserDisplayName())
         .append(Component.text("]").append(Component.text(player.getPlayer().getName()))));
@@ -135,26 +141,25 @@ public class GameContext {
       if (!player.available()) {
         continue;
       }
+      if (target.getId().equals(player.getId())) {
+        continue;
+      }
+
       ServerPlayer handle = ((CraftPlayer) player.getPlayer()).getHandle();
       String newName = admin ? "[" + player.getUserNumber() + "]" + player.getPlayer().getName() :
           String.valueOf(player.getUserNumber());
 
-      GameProfile profile = new GameProfile(handle.getUUID(), newName);
-
       final EnumSet<ClientboundPlayerInfoUpdatePacket.Action> enumSet =
-          EnumSet.of(ClientboundPlayerInfoUpdatePacket.Action.ADD_PLAYER,
-              ClientboundPlayerInfoUpdatePacket.Action.INITIALIZE_CHAT,
-              ClientboundPlayerInfoUpdatePacket.Action.UPDATE_GAME_MODE,
+          EnumSet.of(
               ClientboundPlayerInfoUpdatePacket.Action.UPDATE_LISTED,
-              ClientboundPlayerInfoUpdatePacket.Action.UPDATE_LATENCY,
               ClientboundPlayerInfoUpdatePacket.Action.UPDATE_DISPLAY_NAME);
       final List<ClientboundPlayerInfoUpdatePacket.Entry> entry =
-          List.of(new ClientboundPlayerInfoUpdatePacket.Entry(handle.getUUID(), profile,
+          List.of(new ClientboundPlayerInfoUpdatePacket.Entry(handle.getGameProfile().getId(),
+              handle.getGameProfile(),
               true,
               handle.connection.latency(), handle.gameMode.getGameModeForPlayer(),
               net.minecraft.network.chat.Component.literal(newName),
               Optionull.map(handle.getChatSession(), RemoteChatSession::asData)));
-//      player.getPlayer().setCustomNameVisible(true);
       ClientboundBundlePacket bundlePacket =
           new ClientboundBundlePacket(List.of(new ClientboundPlayerInfoUpdatePacket(enumSet, entry),
               PlayerUtils.createChangeCustomNamePacket(player.getPlayer(), newName)));
@@ -180,30 +185,32 @@ public class GameContext {
     if (!player.available()) {
       return;
     }
+
     ServerPlayer handle = ((CraftPlayer) player.getPlayer()).getHandle();
     for (GamePlayer target : targets) {
       if (!target.available()) {
         continue;
       }
+      if (target.getId().equals(player.getId())) {
+        continue;
+      }
+
       boolean admin = target.getRole().getLevel() >= GameRole.ADMIN.getLevel();
       String newName = admin ? "[" + player.getUserNumber() + "]" + player.getPlayer().getName() :
           String.valueOf(player.getUserNumber());
 
-      GameProfile profile = new GameProfile(handle.getUUID(), newName);
       final EnumSet<ClientboundPlayerInfoUpdatePacket.Action> enumSet =
-          EnumSet.of(ClientboundPlayerInfoUpdatePacket.Action.ADD_PLAYER,
-              ClientboundPlayerInfoUpdatePacket.Action.INITIALIZE_CHAT,
-              ClientboundPlayerInfoUpdatePacket.Action.UPDATE_GAME_MODE,
+          EnumSet.of(
               ClientboundPlayerInfoUpdatePacket.Action.UPDATE_LISTED,
-              ClientboundPlayerInfoUpdatePacket.Action.UPDATE_LATENCY,
               ClientboundPlayerInfoUpdatePacket.Action.UPDATE_DISPLAY_NAME);
 
       final List<ClientboundPlayerInfoUpdatePacket.Entry> entry =
-          List.of(new ClientboundPlayerInfoUpdatePacket.Entry(handle.getUUID(), profile,
-              true,
-              handle.connection.latency(), handle.gameMode.getGameModeForPlayer(),
-              net.minecraft.network.chat.Component.literal(newName),
-              Optionull.map(handle.getChatSession(), RemoteChatSession::asData)));
+          List.of(
+              new ClientboundPlayerInfoUpdatePacket.Entry(handle.getUUID(), handle.getGameProfile(),
+                  true,
+                  handle.connection.latency(), handle.gameMode.getGameModeForPlayer(),
+                  net.minecraft.network.chat.Component.literal(newName),
+                  Optionull.map(handle.getChatSession(), RemoteChatSession::asData)));
       ClientboundBundlePacket bundlePacket =
           new ClientboundBundlePacket(List.of(new ClientboundPlayerInfoUpdatePacket(enumSet, entry),
               PlayerUtils.createChangeCustomNamePacket(player.getPlayer(), newName)));

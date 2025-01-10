@@ -6,9 +6,7 @@ import io.github.singlerr.sg.core.context.GamePlayer;
 import io.github.singlerr.sg.core.context.GameRole;
 import io.github.singlerr.sg.core.context.GameStatus;
 import io.github.singlerr.sg.core.network.NetworkRegistry;
-import io.github.singlerr.sg.core.network.packets.PacketAnimateTransformationModel;
 import io.github.singlerr.sg.core.setup.GameSettings;
-import io.github.singlerr.sg.core.utils.Animation;
 import io.github.singlerr.sg.core.utils.Interpolator;
 import io.github.singlerr.sg.core.utils.PlayerUtils;
 import io.github.singlerr.sg.core.utils.SoundSet;
@@ -22,9 +20,13 @@ import java.util.UUID;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import net.minecraft.util.Mth;
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Display;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
+import org.bukkit.util.Transformation;
+import org.joml.Quaternionf;
 
 @Slf4j
 public final class RLGLGameContext extends GameContext {
@@ -61,6 +63,7 @@ public final class RLGLGameContext extends GameContext {
     this.scheduler = new TaskScheduler();
     this.network = Bukkit.getServer().getServicesManager().getRegistration(NetworkRegistry.class)
         .getProvider();
+    this.setRlglStatus(RLGLStatus.IDLE);
   }
 
   public RLGLGameSettings getGameSettings() {
@@ -74,6 +77,12 @@ public final class RLGLGameContext extends GameContext {
           startTime = System.currentTimeMillis();
           rlglStatus = RLGLStatus.GREEN_LIGHT;
         });
+    for (GamePlayer player : getPlayers(GameRole.TROY.getLevel())) {
+      if (!player.available()) {
+        continue;
+      }
+      player.getPlayer().setWalkSpeed(getGameSettings().getPlayerSpeed());
+    }
   }
 
   public void end() {
@@ -82,13 +91,18 @@ public final class RLGLGameContext extends GameContext {
 
   public void redLight() {
     killTargets.clear();
-    rlglStatus = RLGLStatus.RED_LIGHT;
-    PacketAnimateTransformationModel pkt =
-        new PacketAnimateTransformationModel(youngHee.getUniqueId(), youngHee.getEntityId(),
-            new Animation(getGameSettings().getNodeIndex(), getGameSettings().getFrontState(),
-                getGameSettings().getBackState(),
-                (long) (getGameSettings().getRedLightTurnDelay() * 1000)));
-    network.getChannel().sendToAll(pkt);
+    if (youngHee instanceof Display display) {
+      Transformation t = display.getTransformation();
+      Quaternionf rot = t.getLeftRotation();
+      rot.rotateZ(Mth.PI);
+      display.setInterpolationDelay(0);
+      display.setInterpolationDuration((int) (getGameSettings().getRedLightTurnDelay() * 20));
+      display.setTransformation(t);
+    }
+    soundPlayer.enqueue(getPlayers(), getGameSettings().getTransitionSound().getSound(),
+        getGameSettings().getRedLightTurnDelay(), () -> {
+          rlglStatus = RLGLStatus.RED_LIGHT;
+        });
   }
 
   public void greenLight(SoundSet set) {
@@ -102,17 +116,23 @@ public final class RLGLGameContext extends GameContext {
       }
       PlayerUtils.setGlowing(p.getPlayer(), listeners, false);
     }
-    PacketAnimateTransformationModel pkt =
-        new PacketAnimateTransformationModel(youngHee.getUniqueId(), youngHee.getEntityId(),
-            new Animation(getGameSettings().getNodeIndex(), getGameSettings().getBackState(),
-                getGameSettings().getFrontState(),
-                (long) (getGameSettings().getGreenLightTurnDelay() * 1000)));
-    network.getChannel().sendToAll(pkt);
-    scheduler.enqueue((long) (getGameSettings().getGreenLightTurnDelay() * 1000), () -> {
-      rlglStatus = RLGLStatus.GREEN_LIGHT;
-      this.soundPlayer.enqueue(getPlayers(), set.getSound(), set.getDuration(),
-          this::redLight);
-    });
+    rlglStatus = RLGLStatus.GREEN_LIGHT;
+    if (youngHee instanceof Display display) {
+      Transformation t = display.getTransformation();
+      Quaternionf rot = t.getLeftRotation();
+      if (!rot.equals(getGameSettings().getOriginalRot().x, getGameSettings().getOriginalRot().y,
+          getGameSettings().getOriginalRot().z, getGameSettings().getOriginalRot().w)) {
+        rot.rotateZ(-Mth.PI);
+        display.setInterpolationDelay(0);
+        display.setInterpolationDuration((int) (getGameSettings().getRedLightTurnDelay() * 20));
+        display.setTransformation(t);
+      }
+    }
+    soundPlayer.enqueue(getPlayers(), getGameSettings().getTransitionSound().getSound(),
+        getGameSettings().getGreenLightTurnDelay(), () -> {
+          this.soundPlayer.enqueue(getPlayers(), set.getSound(), set.getDuration(),
+              this::redLight);
+        });
   }
 
 }

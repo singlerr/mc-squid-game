@@ -3,9 +3,11 @@ package io.github.singlerr.sg.core;
 import io.github.singlerr.sg.core.commands.GameCommands;
 import io.github.singlerr.sg.core.network.NetworkRegistry;
 import io.github.singlerr.sg.core.network.PacketRegistry;
+import io.github.singlerr.sg.core.network.handler.PacketRequestSyncHandler;
 import io.github.singlerr.sg.core.network.impl.PluginAwareNetworkRegistry;
 import io.github.singlerr.sg.core.network.packets.PacketAnimateTransformationModel;
 import io.github.singlerr.sg.core.network.packets.PacketInitModel;
+import io.github.singlerr.sg.core.network.packets.PacketRequestSync;
 import io.github.singlerr.sg.core.network.packets.PacketTransformModel;
 import io.github.singlerr.sg.core.registry.Registry;
 import io.github.singlerr.sg.core.registry.impl.DefaultGameRegistry;
@@ -17,6 +19,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Supplier;
 import lombok.Getter;
+import lombok.Setter;
+import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import org.bukkit.Bukkit;
 import org.bukkit.event.Listener;
@@ -37,6 +41,11 @@ public final class GameCore extends JavaPlugin {
   private GameLifecycle coreLifecycle;
   private GameSetupManager setupManager;
 
+  @Accessors(fluent = true)
+  @Getter
+  @Setter
+  private boolean shouldBan = false;
+
   public GameCore() {
     GameCore.instance = this;
   }
@@ -46,6 +55,7 @@ public final class GameCore extends JavaPlugin {
     log.info("Waiting for all other plugins fully loaded");
     Watcher watcher = new Watcher(this::allPluginsEnabled, this::load);
     watcher.runTaskTimer(instance, 0L, 1L);
+
   }
 
   private boolean allPluginsEnabled() {
@@ -99,6 +109,9 @@ public final class GameCore extends JavaPlugin {
     registry.register(PacketInitModel.ID,
         PacketRegistry.createRegistry(PacketInitModel.class, PacketInitModel::new, (pkt, p) -> {
         }));// only one direction
+    registry.register(PacketRequestSync.ID,
+        PacketRegistry.createRegistry(PacketRequestSync.class, PacketRequestSync::new,
+            new PacketRequestSyncHandler(instance)));
   }
 
   private void registerCommands() {
@@ -114,11 +127,8 @@ public final class GameCore extends JavaPlugin {
       saveDefaultConfig();
       reloadConfig();
     }
-
-    if (getAdminSkinUrl() == null || getPlayerSkinUrl() == null) {
-      saveDefaultConfig();
-      reloadConfig();
-    }
+    saveDefaultConfig();
+    reloadConfig();
 
     File storageFile = new File(getDataFolder(), "games.json");
     boolean copyDefaults = !storageFile.exists();
@@ -159,8 +169,8 @@ public final class GameCore extends JavaPlugin {
     return getConfig().getString("admin_skin_url");
   }
 
-  public List<String> getPlayerSkinUrl() {
-    return getConfig().getStringList("player_skin_url");
+  public List<String> getPlayerSkinUrl(boolean male) {
+    return getConfig().getStringList(male ? "player_skin_url_man" : "player_skin_url_woman");
   }
 
   private static class Watcher extends BukkitRunnable {

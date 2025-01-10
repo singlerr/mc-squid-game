@@ -9,18 +9,17 @@ import org.bukkit.Material;
 @Data
 public final class DalgonaGameSettings implements GameSettings {
 
-  private Material dalgonaType = Material.YELLOW_CARPET;
+  private Material dalgonaType = Material.MANGROVE_LEAVES;
 
-  private Map<String, String> dalgonaImages;
-
+  private Map<String, Dalgona> dalgonaList;
   private float time = 3 * 60;
 
   public DalgonaGameSettings() {
-    dalgonaImages = new HashMap<>();
-    dalgonaImages.put("umbrella", "images/umbrella.png");
-    dalgonaImages.put("circle", "images/circle.png");
-    dalgonaImages.put("star", "images/star.png");
-    dalgonaImages.put("triangle", "images/triangle.png");
+    dalgonaList = new HashMap<>();
+    dalgonaList.put("umbrella", new Dalgona("images/umbrella.png", 380));
+    dalgonaList.put("circle", new Dalgona("images/circle.png", 210));
+    dalgonaList.put("star", new Dalgona("images/star.png", 260));
+    dalgonaList.put("triangle", new Dalgona("images/triangle.png", 195));
   }
 
   public void copy(DalgonaGameSettings o) {

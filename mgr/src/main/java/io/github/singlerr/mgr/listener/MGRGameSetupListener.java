@@ -6,6 +6,7 @@ import io.github.singlerr.sg.core.utils.InteractableListener;
 import java.util.function.Consumer;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.block.data.Openable;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -30,7 +31,7 @@ public final class MGRGameSetupListener extends InteractableListener {
     if (item == null) {
       return;
     }
-    if (event.getInteractionPoint() == null) {
+    if (event.getClickedBlock() == null) {
       return;
     }
 
@@ -43,7 +44,13 @@ public final class MGRGameSetupListener extends InteractableListener {
     if (executor == null) {
       return;
     }
-    executor.accept(event.getInteractionPoint());
+
+    if (!(event.getClickedBlock().getBlockData() instanceof Openable)) {
+      errorCallback(event.getPlayer(), "문 종류를 선택하세요!");
+      return;
+    }
+
+    executor.accept(event.getClickedBlock().getLocation());
     context.endDoorSetup(p.getUniqueId());
     successCallback(p, "설정 완료");
   }
