@@ -45,7 +45,6 @@ public final class Admin extends JavaPlugin {
       getServer().getPluginManager().disablePlugin(this);
     }
     getServer().getPluginManager().registerEvents(new EventListener(this), this);
-    getCommand("mgw").setExecutor(new MagicWandCommand());
     registerPackets();
   }
 

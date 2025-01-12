@@ -4,5 +4,3 @@ main: io.github.singlerr.admin.Admin
 api-version: '1.20'
 depend: [ "squid-game-core" ]
 authors: [ singlerr ]
-commands:
-  mgw:
