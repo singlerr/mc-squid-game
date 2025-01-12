@@ -11,6 +11,7 @@ import io.github.singlerr.sg.rlgl.game.RLGLGameContext;
 import io.github.singlerr.sg.rlgl.game.RLGLGameSettings;
 import io.github.singlerr.sg.rlgl.game.RLGLItemRole;
 import io.github.singlerr.sg.rlgl.game.RLGLStatus;
+import io.papermc.paper.ban.BanListType;
 import io.papermc.paper.event.player.AsyncChatEvent;
 import java.util.Collection;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +26,8 @@ import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.player.PlayerRespawnEvent;
+import org.bukkit.event.player.PlayerToggleSneakEvent;
 
 @Slf4j
 public final class RLGLEventListener extends InteractableListener {
@@ -59,6 +62,7 @@ public final class RLGLEventListener extends InteractableListener {
 
     float moveDist = (float) event.getFrom().distance(event.getTo());
     float rotDist = (float) event.getFrom().getDirection().distance(event.getTo().getDirection());
+
     if (moveDist >= settings.getKillSwitch() || rotDist >= settings.getKillSwitch()) {
       int prevSize = game.getGameContext().getKillTargets().size();
       game.getGameContext().getKillTargets().add(player.getPlayer().getUniqueId());
@@ -69,9 +73,9 @@ public final class RLGLEventListener extends InteractableListener {
                     .reduce((a, b) -> a.append(Component.text(",")).append(b)).get())
                 .append(Component.text("]"));
         Collection<GamePlayer> players = game.getGameContext().getPlayers(GameRole.ADMIN);
-        PlayerUtils.setGlowing(player.getPlayer(),
-            players.stream().filter(GamePlayer::available).map(
-                GamePlayer::getPlayer).toList(), true);
+        PlayerUtils.enableGlowing(event.getPlayer(),
+            game.getGameContext().getOnlinePlayers(GameRole.ADMIN),
+            game.getGameContext().getGlowingColor());
         for (GamePlayer gamePlayer : players) {
           gamePlayer.getPlayer()
               .sendMessage(msg.style(Style.style(NamedTextColor.RED)));
@@ -81,7 +85,49 @@ public final class RLGLEventListener extends InteractableListener {
   }
 
   @EventHandler
+  public void onShift(PlayerToggleSneakEvent event) {
+    RLGLGameContext context = game.getGameContext();
+    GamePlayer player = context.getPlayer(event.getPlayer().getUniqueId());
+    if (player == null) {
+      return;
+    }
+    if (!player.available()) {
+      return;
+    }
+    if (player.getRole().getLevel() >= GameRole.ADMIN.getLevel()) {
+      return;
+    }
+    if (game.getGameContext().getRlglStatus() != RLGLStatus.RED_LIGHT) {
+      return;
+    }
+
+    RLGLGameSettings settings = (RLGLGameSettings) context.getSettings();
+    if (!settings.getDeadRegion().isIn(player.getPlayer().getLocation())) {
+      return;
+    }
+
+    int prevSize = game.getGameContext().getKillTargets().size();
+    game.getGameContext().getKillTargets().add(player.getPlayer().getUniqueId());
+    if (prevSize != game.getGameContext().getKillTargets().size()) {
+      Component msg =
+          Component.text("플레이어 움직임 감지: [").append(game.getGameContext().getKillTargets().stream()
+                  .map(i -> game.getGameContext().getPlayer(i).getAdminDisplayName())
+                  .reduce((a, b) -> a.append(Component.text(",")).append(b)).get())
+              .append(Component.text("]"));
+      Collection<GamePlayer> players = game.getGameContext().getPlayers(GameRole.ADMIN);
+      PlayerUtils.enableGlowing(event.getPlayer(),
+          game.getGameContext().getOnlinePlayers(GameRole.ADMIN),
+          game.getGameContext().getGlowingColor());
+      for (GamePlayer gamePlayer : players) {
+        gamePlayer.getPlayer()
+            .sendMessage(msg.style(Style.style(NamedTextColor.RED)));
+      }
+    }
+  }
+
+  @EventHandler
   public void onChat(AsyncChatEvent event) {
+
     GameContext context = game.getGameContext();
     GamePlayer player = context.getPlayer(event.getPlayer().getUniqueId());
     if (player == null) {
@@ -100,6 +146,15 @@ public final class RLGLEventListener extends InteractableListener {
 
     event.setCancelled(true);
   }
+
+  @EventHandler
+  public void banPlayer(PlayerRespawnEvent event) {
+    if (Bukkit.getServer().getBanList(BanListType.PROFILE)
+        .isBanned(event.getPlayer().getPlayerProfile())) {
+      event.getPlayer().kick(Component.text("오징어 게임에서 탈락했습니다!"));
+    }
+  }
+
 
   @EventHandler
   public void onQuit(PlayerDeathEvent event) {

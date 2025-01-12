@@ -1,15 +1,67 @@
 plugins {
     alias(libs.plugins.paperweight.userdev) apply false
     alias(libs.plugins.lombok) apply false
-    alias(libs.plugins.papermake) apply false
+    alias(libs.plugins.run.paper) apply false
 }
 
 
-allprojects {
+apply plugin: 'java'
+apply plugin: libs.plugins.paperweight.userdev.get().pluginId
+apply plugin: libs.plugins.lombok.get().pluginId
+apply plugin: libs.plugins.run.paper.get().pluginId
+
+group = 'io.github.singlerr'
+version = plugin_version
+
+repositories {
+    mavenCentral()
+    maven {
+        name 'codemc'
+        url 'https://repo.codemc.org/repository/maven-public/'
+    }
+}
+
+base {
+    archivesName = plugin_name
+}
+
+configurations {
+    embed
+    implementation.extendsFrom(embed)
+}
+
+dependencies {
+    paperweight.paperDevBundle(paper_version)
+    compileOnly "net.skinsrestorer:skinsrestorer-api:${project.skin_restorer_version}"
+    embed "fr.skytasul:glowingentities:${project.glowing_entities_version}"
+}
+
+jar {
+    from {
+        configurations.embed.collect { it.isDirectory() ? it : zipTree(it) }
+    } {
+        exclude "LICENSE.txt", "META-INF/MANIFSET.MF", "META-INF/maven/**", "META-INF/*.RSA", "META-INF/*.SF"
+    }
+}
+
+processResources {
+    def props = [version: version, author: plugin_author, name: plugin_name]
+    inputs.properties props
+    filteringCharset 'UTF-8'
+    filesMatching('plugin.yml') {
+        expand props
+    }
+}
+
+assemble {
+    dependsOn reobfJar
+}
+
+subprojects {
     apply plugin: 'java'
     apply plugin: libs.plugins.paperweight.userdev.get().pluginId
     apply plugin: libs.plugins.lombok.get().pluginId
-    apply plugin: libs.plugins.papermake.get().pluginId
+    apply plugin: libs.plugins.run.paper.get().pluginId
 
     group = 'io.github.singlerr'
     version = plugin_version
@@ -24,11 +76,11 @@ allprojects {
             name 'codemc'
             url 'https://repo.codemc.org/repository/maven-public/'
         }
+        maven { url 'https://jitpack.io' }
     }
 
     dependencies {
         paperweight.paperDevBundle(paper_version)
-        compileOnly "net.skinsrestorer:skinsrestorer-api:${project.skin_restorer_version}"
         testImplementation platform('org.junit:junit-bom:5.10.0')
         testImplementation 'org.junit.jupiter:junit-jupiter'
     }
@@ -36,6 +88,7 @@ allprojects {
     test {
         useJUnitPlatform()
     }
+
     def targetJavaVersion = 17
     java {
         def javaVersion = JavaVersion.toVersion(targetJavaVersion)
@@ -65,6 +118,16 @@ allprojects {
 
     assemble {
         dependsOn reobfJar
+    }
+
+    runServer {
+        minecraftVersion(minecraft_version)
+        javaLauncher = javaToolchains.launcherFor {
+            vendor = JvmVendorSpec.JETBRAINS
+            languageVersion = JavaLanguageVersion.of(17)
+        }
+
+        jvmArgs "-XX:+AllowEnhancedClassRedefinition"
     }
 }
 

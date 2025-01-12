@@ -1,9 +1,11 @@
 [versions]
 paperweight = "1.7.7"
 lombok = "8.10"
-papermake = "1.0.6"
+run-paper = "2.3.1"
+shadowjar = "7.1.2"
 
 [plugins]
 paperweight-userdev = { id = "io.papermc.paperweight.userdev", version.ref = "paperweight" }
 lombok = { id = "io.freefair.lombok", version.ref = "lombok" }
-papermake = { id = "com.rikonardo.papermake", version.ref = "papermake" }
+run-paper = { id = "xyz.jpenilla.run-paper", version.ref = "run-paper" }
+shadowjar = { id = "com.github.johnrengelman.shadow", version.ref = "shadowjar" }

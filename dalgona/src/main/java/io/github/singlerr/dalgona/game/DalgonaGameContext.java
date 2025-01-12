@@ -22,6 +22,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.Style;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -34,13 +35,13 @@ public class DalgonaGameContext extends GameContext {
   private final Map<UUID, Dalgona> providedDalgonaList;
 
   private final SecureRandom random;
+  private final ChatColor glowingColor;
   @Getter
   @Setter
   private DalgonaGameStatus gameStatus;
   @Getter
   @Setter
   private long startTime;
-
   @Getter
   @Setter
   private int cutoff;
@@ -55,6 +56,7 @@ public class DalgonaGameContext extends GameContext {
     this.playerStatusList = new HashMap<>();
     this.providedDalgonaList = new HashMap<>();
     this.random = new SecureRandom();
+    this.glowingColor = ChatColor.AQUA;
   }
 
   public DalgonaGameSettings getGameSettings() {
@@ -87,9 +89,7 @@ public class DalgonaGameContext extends GameContext {
     if (packet.isSuccess() &&
         playerStatusList.values().stream().filter(st -> st == PlayerDalgonaStatus.SUCCESS).count() <
             getCutoff()) {
-      PlayerUtils.setGlowing(player,
-          getPlayers(GameRole.ADMIN).stream().filter(GamePlayer::available)
-              .map(GamePlayer::getPlayer).toList(), true);
+      PlayerUtils.enableGlowing(player, getOnlinePlayers(GameRole.ADMIN), glowingColor);
     }
 
     playerStatusList.computeIfPresent(player.getUniqueId(),

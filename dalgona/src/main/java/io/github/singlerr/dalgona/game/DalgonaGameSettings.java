@@ -18,7 +18,7 @@ public final class DalgonaGameSettings implements GameSettings {
     dalgonaList = new HashMap<>();
     dalgonaList.put("umbrella", new Dalgona("images/umbrella.png", 380));
     dalgonaList.put("circle", new Dalgona("images/circle.png", 210));
-    dalgonaList.put("star", new Dalgona("images/star.png", 260));
+    dalgonaList.put("star", new Dalgona("images/star.png", 240));
     dalgonaList.put("triangle", new Dalgona("images/triangle.png", 195));
   }
 

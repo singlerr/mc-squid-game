@@ -34,6 +34,7 @@ import net.kyori.adventure.text.JoinConfiguration;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.Style;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -53,23 +54,18 @@ import org.joml.Vector3f;
 public final class MGRGameContext extends GameContext {
 
   private final Interpolator interpolator;
+  private final ChatColor glowingColor;
   private MGRGameStatus gameStatus;
   private TaskScheduler scheduler;
   private TickableSoundPlayer soundPlayer;
   private long joiningStartedTime;
   private Entity pillar;
   private int playerCount;
-
   private SecureRandom random;
-
   private Set<Location> barrierCache;
-
   private Vector3f initialPos;
-
   private Map<Integer, AtomicInteger> playerCounts;
-
   private Map<UUID, Mount> mountList;
-
   @Accessors(fluent = true)
   private boolean rotatePlayer;
 
@@ -86,6 +82,7 @@ public final class MGRGameContext extends GameContext {
     this.playerCounts = Collections.synchronizedMap(new HashMap<>());
     this.mountList = Collections.synchronizedMap(new HashMap<>());
     this.rotatePlayer = false;
+    this.glowingColor = ChatColor.AQUA;
   }
 
   public Display getDisplay(Entity entity) {
@@ -112,17 +109,8 @@ public final class MGRGameContext extends GameContext {
       playerCounts.put(i, new AtomicInteger(0));
     }
 
-    // remove glowing
-    Collection<Player> admins =
-        getPlayers(GameRole.ADMIN).stream().filter(GamePlayer::available).map(GamePlayer::getPlayer)
-            .toList();
-    for (GamePlayer target : getPlayers(GameRole.TROY.getLevel())) {
-      if (!target.available()) {
-        continue;
-      }
-      PlayerUtils.setGlowing(target.getPlayer(), admins, false);
-    }
-
+    PlayerUtils.disableGlowing(getOnlinePlayers(GameRole.TROY.getLevel()),
+        getOnlinePlayers(GameRole.ADMIN));
     // setup mounts
     float rotationSpeed = 0.01f;
     setupMounts(rotationSpeed);
@@ -259,6 +247,8 @@ public final class MGRGameContext extends GameContext {
     setDoorOpen(false);
     List<Component> success = new ArrayList<>();
     List<Component> failed = new ArrayList<>();
+
+    Collection<Player> adminPlayers = getOnlinePlayers(GameRole.ADMIN);
     for (Map.Entry<Integer, Region> entry : ((MGRGameSettings) getSettings()).getRooms()
         .entrySet()) {
       int roomNum = entry.getKey();
@@ -266,12 +256,7 @@ public final class MGRGameContext extends GameContext {
       Collection<Entity> playersInRoom = getRoomPlayers(roomRegion);
       int count = playersInRoom.size();
       if (playerCount != count) {
-        Collection<Player> admins =
-            getPlayers(GameRole.ADMIN).stream().filter(GamePlayer::available)
-                .map(GamePlayer::getPlayer).toList();
-        for (Entity entity : playersInRoom) {
-          PlayerUtils.setGlowing((Player) entity, admins, true);
-        }
+        PlayerUtils.enableEntityGlowing(playersInRoom, adminPlayers, glowingColor);
         Component comp = Component.text(roomNum + "번").append(Component.text("(" + count + "명)"));
         if (count > 0) {
           comp = comp.style(Style.style(NamedTextColor.AQUA));

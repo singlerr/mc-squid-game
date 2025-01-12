@@ -10,15 +10,19 @@ import io.github.singlerr.sg.core.context.GameContext;
 import io.github.singlerr.sg.core.context.GamePlayer;
 import io.github.singlerr.sg.core.context.GameRole;
 import io.github.singlerr.sg.core.utils.InteractableListener;
+import io.papermc.paper.ban.BanListType;
 import io.papermc.paper.event.player.AsyncChatEvent;
 import lombok.AllArgsConstructor;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerRespawnEvent;
 
 @AllArgsConstructor
 public final class DalgonaEventListener extends InteractableListener {
@@ -44,6 +48,14 @@ public final class DalgonaEventListener extends InteractableListener {
       context.syncName(player, context.getPlayers());
       context.syncName(context.getPlayers(), player);
     }, 20L);
+  }
+
+  @EventHandler
+  public void banPlayer(PlayerRespawnEvent event) {
+    if (Bukkit.getServer().getBanList(BanListType.PROFILE)
+        .isBanned(event.getPlayer().getPlayerProfile())) {
+      event.getPlayer().kick(Component.text("오징어 게임에서 탈락했습니다!"));
+    }
   }
 
 
@@ -110,4 +122,19 @@ public final class DalgonaEventListener extends InteractableListener {
 
     event.setCancelled(true);
   }
+
+  @EventHandler
+  public void onQuit(PlayerDeathEvent event) {
+    Player player = event.getPlayer();
+    GamePlayer gamePlayer;
+    if ((gamePlayer = game.getContext().getPlayer(player.getUniqueId())) != null) {
+      game.getContext().kickPlayer(gamePlayer);
+    }
+  }
+
+  @EventHandler
+  public void removeDeathMessage(PlayerDeathEvent event) {
+    event.deathMessage(null);
+  }
+
 }

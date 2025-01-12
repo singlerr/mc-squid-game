@@ -1,5 +1,6 @@
 package io.github.singlerr.sg.core.utils;
 
+import fr.skytasul.glowingentities.GlowingEntities;
 import io.github.singlerr.sg.core.GameCore;
 import io.github.singlerr.sg.core.context.GamePlayer;
 import io.github.singlerr.sg.core.context.GameRole;
@@ -9,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import lombok.Setter;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 import net.kyori.adventure.text.Component;
@@ -25,7 +27,8 @@ import net.skinsrestorer.api.property.InputDataResult;
 import net.skinsrestorer.api.property.SkinVariant;
 import net.skinsrestorer.api.storage.PlayerStorage;
 import net.skinsrestorer.api.storage.SkinStorage;
-import org.bukkit.craftbukkit.v1_20_R3.entity.CraftPlayer;
+import org.bukkit.ChatColor;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 
 @Slf4j
@@ -33,6 +36,8 @@ import org.bukkit.entity.Player;
 public class PlayerUtils {
 
   private SecureRandom random = new SecureRandom();
+  @Setter
+  private GlowingEntities glowingManager;
 
   public boolean contains(Collection<Player> players, Player player) {
     return players.stream().anyMatch(p -> p.getUniqueId().equals(player.getUniqueId()));
@@ -51,16 +56,51 @@ public class PlayerUtils {
     }
   }
 
-  public void setGlowing(Player player, Collection<Player> listeners, boolean flag) {
-    byte glowingByte = (byte) (flag ? 0x40 : 0x0);
-    List<SynchedEntityData.DataValue<?>> eData = new ArrayList<>();
-    eData.add(
-        SynchedEntityData.DataValue.create(new EntityDataAccessor<>(0, EntityDataSerializers.BYTE),
-            glowingByte));
-    ClientboundSetEntityDataPacket metadata =
-        new ClientboundSetEntityDataPacket(player.getEntityId(), eData);
-    for (Player listener : listeners) {
-      ((CraftPlayer) listener).getHandle().connection.send(metadata);
+  public void disableGlowing(Entity entity, Collection<Player> receivers) {
+
+    for (Player receiver : receivers) {
+      try {
+        glowingManager.unsetGlowing(entity, receiver);
+      } catch (Exception e) {
+        log.error("Failed to enable glowing", e);
+      }
+    }
+  }
+
+  public void enableGlowing(Collection<Player> entity, Collection<Player> receivers,
+                            ChatColor color) {
+    for (Player player : entity) {
+      enableGlowing(player, receivers, color);
+    }
+  }
+
+  public void enableEntityGlowing(Collection<Entity> entity, Collection<Player> receivers,
+                                  ChatColor color) {
+    for (Entity player : entity) {
+      enableGlowing(player, receivers, color);
+    }
+  }
+
+  public void disableGlowing(Collection<Player> entity, Collection<Player> receivers) {
+    for (Player player : entity) {
+      disableGlowing(player, receivers);
+    }
+  }
+
+  public void disableEntityGlowing(Collection<Entity> entity, Collection<Player> receivers) {
+    for (Entity player : entity) {
+      disableGlowing(player, receivers);
+    }
+  }
+
+
+  public void enableGlowing(Entity entity, Collection<Player> receivers, ChatColor color) {
+    for (Player receiver : receivers) {
+      try {
+        glowingManager.setGlowing(entity, receiver, color);
+      } catch (Exception e) {
+        log.error("Failed to enable glowing", e);
+      }
     }
   }
 

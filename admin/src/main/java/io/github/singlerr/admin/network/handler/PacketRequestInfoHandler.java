@@ -66,7 +66,7 @@ public final class PacketRequestInfoHandler implements PacketHandler<PacketReque
         if (currentGame == null) {
           infoPacket =
               new PacketGameInfo(id, new GameHistory(id, 0, 0), new ArrayList<>(histories));
-          ;
+
           PacketPlayerInfoFragment playerInfoPacket =
               new PacketPlayerInfoFragment(pktId, id, new ArrayList<>(), 0, 0);
           network.getChannel().sendTo(player, infoPacket);

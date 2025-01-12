@@ -4,6 +4,7 @@ import io.github.singlerr.sg.core.GameCore;
 import io.github.singlerr.sg.core.setup.GameSettings;
 import io.github.singlerr.sg.core.utils.PlayerUtils;
 import java.util.Collection;
+import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
@@ -23,6 +24,7 @@ import net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket;
 import net.minecraft.server.level.ServerPlayer;
 import org.bukkit.GameMode;
 import org.bukkit.craftbukkit.v1_20_R3.entity.CraftPlayer;
+import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffectType;
 
 @Slf4j
@@ -48,7 +50,7 @@ public class GameContext {
     this.status = status;
     this.eventBus = eventBus;
     this.settings = settings;
-    this.initialPlayerSize = players.size();
+    this.initialPlayerSize = getPlayers(GameRole.TROY.getLevel()).size();
   }
 
   public Map<UUID, GamePlayer> getPlayerMap() {
@@ -65,6 +67,16 @@ public class GameContext {
 
   public Collection<GamePlayer> getPlayers(GameRole role) {
     return getPlayers().stream().filter(p -> p.getRole() == role).toList();
+  }
+
+  public Collection<Player> getOnlinePlayers(GameRole role) {
+    return getPlayers().stream().filter(p -> p.getRole() == role).filter(GamePlayer::available)
+        .map(GamePlayer::getPlayer).toList();
+  }
+
+  public Collection<Player> getOnlinePlayers(int level) {
+    return getPlayers().stream().filter(p -> p.getRole().getLevel() <= level)
+        .filter(GamePlayer::available).map(GamePlayer::getPlayer).toList();
   }
 
   public boolean kickPlayer(GamePlayer player) {
@@ -90,6 +102,20 @@ public class GameContext {
     return false;
   }
 
+  public void tryBanPlayer(GamePlayer player) {
+    if (!player.available()) {
+      return;
+    }
+
+    if (!GameCore.getInstance().shouldBan()) {
+      return;
+    }
+
+    if (player.getRole().getLevel() < GameRole.TROY.getLevel()) {
+      player.getPlayer().ban("오징어 게임에서 탈락했습니다!", (Date) null, null, false);
+    }
+  }
+
   public boolean joinPlayer(GamePlayer player) {
     if (!player.available()) {
       return true;
@@ -100,7 +126,13 @@ public class GameContext {
       return true;
     } else {
       if (player.getRole() == GameRole.TROY) {
-        players.put(player.getId(), player);
+        GamePlayer original = players.get(player.getId());
+        if (original != null) {
+          original.setRole(GameRole.TROY);
+        } else {
+          players.put(player.getId(), player);
+          eventBus.postGameJoin(this, player);
+        }
         return true;
       }
 
@@ -124,6 +156,7 @@ public class GameContext {
   public GamePlayer getPlayer(UUID playerId) {
     return players.get(playerId);
   }
+
 
   public void syncNameLowerThan(int level, GamePlayer target) {
     syncName(p -> p.getRole().getLevel() <= level, target);

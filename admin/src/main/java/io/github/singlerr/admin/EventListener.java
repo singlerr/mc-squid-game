@@ -64,6 +64,10 @@ public final class EventListener extends InteractableListener {
       return;
     }
 
+    if (!item.getItemMeta().hasCustomModelData()) {
+      return;
+    }
+
     if (item.getType() != Material.GOLDEN_AXE &&
         item.getItemMeta().getCustomModelData() != MP5_MODEL_DATA) {
       return;
@@ -92,7 +96,12 @@ public final class EventListener extends InteractableListener {
     }
 
     event.getPlayer().getWorld().playSound(event.getPlayer().getLocation(), SOUND_MP5, 1f, 1f);
-    player.setHealth(0);
+    player.setVelocity(event.getPlayer().getLocation().getDirection().multiply(0.3));
+
+    Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> {
+      player.setHealth(0);
+    }, 5L);
+
   }
 
   @EventHandler(priority = EventPriority.MONITOR)

@@ -1,14 +1,11 @@
 package io.github.singlerr.mgr.game;
 
-import io.github.singlerr.sg.core.GameCore;
 import io.github.singlerr.sg.core.context.GameContext;
 import io.github.singlerr.sg.core.context.GamePlayer;
 import io.github.singlerr.sg.core.context.GameRole;
 import io.github.singlerr.sg.core.events.GameEventListener;
 import io.github.singlerr.sg.core.utils.EntitySerializable;
 import io.github.singlerr.sg.core.utils.PlayerUtils;
-import java.util.Collection;
-import java.util.Date;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.kyori.adventure.text.Component;
@@ -53,9 +50,7 @@ public final class MGRGameEventListener implements GameEventListener {
             NamedTextColor.RED))));
       }
     }
-    if (GameCore.getInstance().shouldBan()) {
-      player.getPlayer().ban("오징어게임에서 탈락했습니다!", (Date) null, "", true);
-    }
+    context.tryBanPlayer(player);
   }
 
   @Override
@@ -121,17 +116,9 @@ public final class MGRGameEventListener implements GameEventListener {
       joiningTimeIndicator = null;
     }
 
-    Collection<Player> admins =
-        context.getPlayers(GameRole.ADMIN).stream().filter(GamePlayer::available)
-            .map(GamePlayer::getPlayer).toList();
-
-    for (GamePlayer player : context.getPlayers(GameRole.TROY.getLevel())) {
-      if (!player.available()) {
-        continue;
-      }
-
-      PlayerUtils.setGlowing(player.getPlayer(), admins, false);
-    }
+    MGRGameContext ctx = (MGRGameContext) context;
+    PlayerUtils.disableGlowing(ctx.getOnlinePlayers(GameRole.TROY.getLevel()),
+        ctx.getOnlinePlayers(GameRole.ADMIN));
 
   }
 

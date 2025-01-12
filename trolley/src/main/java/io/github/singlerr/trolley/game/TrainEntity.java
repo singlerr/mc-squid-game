@@ -1,10 +1,12 @@
 package io.github.singlerr.trolley.game;
 
+import io.github.singlerr.sg.core.GameCore;
 import io.github.singlerr.sg.core.context.GameRole;
 import io.github.singlerr.sg.core.utils.EntitySerializable;
 import io.github.singlerr.sg.core.utils.Region;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Display;
 import org.bukkit.entity.Entity;
@@ -112,9 +114,18 @@ public final class TrainEntity {
                 e -> context.getPlayer(e.getUniqueId()) != null &&
                     context.getPlayer(e.getUniqueId()).getRole().getLevel() <= GameRole.TROY.getLevel())
             .toList();
-    players.forEach(e -> ((Player) e).setHealth(0));
+    players.forEach(e -> killPlayer((Player) e));
 
   }
+
+  private void killPlayer(Player player) {
+    Vector dir = new Vector(direction.getX(), direction.getY(), direction.getZ()).normalize();
+    player.setVelocity(dir);
+    Bukkit.getScheduler().scheduleSyncDelayedTask(GameCore.getInstance(), () -> {
+      player.setHealth(0);
+    }, 5L);
+  }
+
 
   public void reset() {
     Display display = train.getEntity().getPassengers().stream().map(EntitySerializable::toEntity)

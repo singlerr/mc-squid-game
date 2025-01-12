@@ -6,6 +6,7 @@ import io.github.singlerr.sg.core.context.GameContext;
 import io.github.singlerr.sg.core.context.GamePlayer;
 import io.github.singlerr.sg.core.context.GameRole;
 import io.github.singlerr.sg.core.utils.InteractableListener;
+import io.papermc.paper.ban.BanListType;
 import io.papermc.paper.event.player.AsyncChatEvent;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
@@ -13,6 +14,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerRespawnEvent;
 
 public final class IntermediaryEventListener extends InteractableListener {
 
@@ -53,6 +55,15 @@ public final class IntermediaryEventListener extends InteractableListener {
     }
 
   }
+
+  @EventHandler
+  public void banPlayer(PlayerRespawnEvent event) {
+    if (Bukkit.getServer().getBanList(BanListType.PROFILE)
+        .isBanned(event.getPlayer().getPlayerProfile())) {
+      event.getPlayer().kick(Component.text("오징어 게임에서 탈락했습니다!"));
+    }
+  }
+
 
   @EventHandler
   public void removeDeathMessage(PlayerDeathEvent event) {

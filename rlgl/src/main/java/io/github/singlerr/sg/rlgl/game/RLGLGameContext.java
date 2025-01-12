@@ -12,7 +12,6 @@ import io.github.singlerr.sg.core.utils.PlayerUtils;
 import io.github.singlerr.sg.core.utils.SoundSet;
 import io.github.singlerr.sg.core.utils.TaskScheduler;
 import io.github.singlerr.sg.core.utils.TickableSoundPlayer;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -22,9 +21,9 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import net.minecraft.util.Mth;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.entity.Display;
 import org.bukkit.entity.Entity;
-import org.bukkit.entity.Player;
 import org.bukkit.util.Transformation;
 import org.joml.Quaternionf;
 
@@ -37,6 +36,8 @@ public final class RLGLGameContext extends GameContext {
   private final TickableSoundPlayer soundPlayer;
   @Getter
   private final NetworkRegistry network;
+  @Getter
+  private final ChatColor glowingColor;
   @Getter
   @Setter
   private long startTime;
@@ -64,6 +65,7 @@ public final class RLGLGameContext extends GameContext {
     this.network = Bukkit.getServer().getServicesManager().getRegistration(NetworkRegistry.class)
         .getProvider();
     this.setRlglStatus(RLGLStatus.IDLE);
+    this.glowingColor = ChatColor.AQUA;
   }
 
   public RLGLGameSettings getGameSettings() {
@@ -106,16 +108,9 @@ public final class RLGLGameContext extends GameContext {
   }
 
   public void greenLight(SoundSet set) {
-    Collection<Player> listeners =
-        getPlayers(GameRole.ADMIN).stream().filter(GamePlayer::available).map(
-            GamePlayer::getPlayer).toList();
-    for (UUID id : killTargets) {
-      GamePlayer p = getPlayer(id);
-      if (!p.available()) {
-        continue;
-      }
-      PlayerUtils.setGlowing(p.getPlayer(), listeners, false);
-    }
+    PlayerUtils.disableGlowing(getOnlinePlayers(GameRole.TROY.getLevel()),
+        getOnlinePlayers(GameRole.ADMIN));
+
     rlglStatus = RLGLStatus.GREEN_LIGHT;
     if (youngHee instanceof Display display) {
       Transformation t = display.getTransformation();

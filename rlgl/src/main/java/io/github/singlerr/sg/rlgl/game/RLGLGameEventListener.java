@@ -1,6 +1,5 @@
 package io.github.singlerr.sg.rlgl.game;
 
-import io.github.singlerr.sg.core.GameCore;
 import io.github.singlerr.sg.core.context.GameContext;
 import io.github.singlerr.sg.core.context.GamePlayer;
 import io.github.singlerr.sg.core.context.GameRole;
@@ -9,7 +8,6 @@ import io.github.singlerr.sg.core.network.NetworkRegistry;
 import io.github.singlerr.sg.core.network.packets.PacketInitModel;
 import io.github.singlerr.sg.core.utils.PlayerUtils;
 import java.util.Collection;
-import java.util.Date;
 import lombok.extern.slf4j.Slf4j;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -67,9 +65,7 @@ public class RLGLGameEventListener implements GameEventListener {
             NamedTextColor.RED))));
       }
     }
-    if (GameCore.getInstance().shouldBan()) {
-      player.getPlayer().ban("오징어게임에서 탈락했습니다!", (Date) null, "", true);
-    }
+    context.tryBanPlayer(player);
   }
 
   @Override
@@ -124,13 +120,12 @@ public class RLGLGameEventListener implements GameEventListener {
 
 
     RLGLGameContext ctx = (RLGLGameContext) context;
-    Collection<Player> admin = ctx.getPlayers(GameRole.ADMIN).stream().filter(GamePlayer::available)
-        .map(GamePlayer::getPlayer).toList();
+    Collection<Player> adminPlayers = ctx.getOnlinePlayers(GameRole.ADMIN);
     for (GamePlayer player : ctx.getPlayers(GameRole.TROY.getLevel())) {
       if (!player.available()) {
         continue;
       }
-      PlayerUtils.setGlowing(player.getPlayer(), admin, false);
+      PlayerUtils.disableGlowing(player.getPlayer(), adminPlayers);
       player.getPlayer().setWalkSpeed(0.2f);
     }
   }

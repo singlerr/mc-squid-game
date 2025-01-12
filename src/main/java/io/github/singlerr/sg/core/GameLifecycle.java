@@ -32,6 +32,7 @@ public final class GameLifecycle extends BukkitRunnable {
   private GameInfo currentGame;
   private GameContext prevGameContext;
 
+
   public GameLifecycle(GameRegistry registry, GameSettingsRegistry settingsRegistry,
                        GameCore corePlugin) {
     this.games = registry;

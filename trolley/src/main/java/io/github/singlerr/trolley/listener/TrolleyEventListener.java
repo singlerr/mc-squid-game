@@ -8,6 +8,7 @@ import io.github.singlerr.sg.core.context.GameRole;
 import io.github.singlerr.sg.core.utils.InteractableListener;
 import io.github.singlerr.trolley.game.Ticker;
 import io.github.singlerr.trolley.game.TrolleyGame;
+import io.papermc.paper.ban.BanListType;
 import io.papermc.paper.event.player.AsyncChatEvent;
 import lombok.RequiredArgsConstructor;
 import net.kyori.adventure.text.Component;
@@ -15,6 +16,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerRespawnEvent;
 
 @RequiredArgsConstructor
 public final class TrolleyEventListener extends InteractableListener {
@@ -40,6 +42,14 @@ public final class TrolleyEventListener extends InteractableListener {
       context.syncName(player, context.getPlayers());
       context.syncName(context.getPlayers(), player);
     }, 20L);
+  }
+
+  @EventHandler
+  public void banPlayer(PlayerRespawnEvent event) {
+    if (Bukkit.getServer().getBanList(BanListType.PROFILE)
+        .isBanned(event.getPlayer().getPlayerProfile())) {
+      event.getPlayer().kick(Component.text("오징어 게임에서 탈락했습니다!"));
+    }
   }
 
   @EventHandler

@@ -8,6 +8,7 @@ import io.github.singlerr.sg.core.context.GameContext;
 import io.github.singlerr.sg.core.context.GamePlayer;
 import io.github.singlerr.sg.core.context.GameRole;
 import io.github.singlerr.sg.core.utils.InteractableListener;
+import io.papermc.paper.ban.BanListType;
 import io.papermc.paper.event.player.AsyncChatEvent;
 import java.util.ArrayList;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +20,7 @@ import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.entity.ProjectileLaunchEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.CrossbowMeta;
 
@@ -46,6 +48,14 @@ public final class RouletteEventListener extends InteractableListener {
       context.syncName(player, context.getPlayers());
       context.syncName(context.getPlayers(), player);
     }, 20L);
+  }
+
+  @EventHandler
+  public void banPlayer(PlayerRespawnEvent event) {
+    if (Bukkit.getServer().getBanList(BanListType.PROFILE)
+        .isBanned(event.getPlayer().getPlayerProfile())) {
+      event.getPlayer().kick(Component.text("오징어 게임에서 탈락했습니다!"));
+    }
   }
 
   @EventHandler

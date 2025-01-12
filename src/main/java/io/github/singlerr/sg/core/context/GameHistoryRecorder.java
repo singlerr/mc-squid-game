@@ -13,7 +13,7 @@ public class GameHistoryRecorder {
 
   public void recordGame(String id, GameContext context) {
     games.put(id, new GameHistory(id, context.getInitialPlayerSize(),
-        context.getPlayerMap().size()));
+        context.getPlayers(GameRole.TROY.getLevel()).size()));
   }
 
   public Collection<GameHistory> getAll() {

@@ -1,11 +1,9 @@
 package io.github.singlerr.trolley.game;
 
-import io.github.singlerr.sg.core.GameCore;
 import io.github.singlerr.sg.core.context.GameContext;
 import io.github.singlerr.sg.core.context.GamePlayer;
 import io.github.singlerr.sg.core.context.GameRole;
 import io.github.singlerr.sg.core.events.GameEventListener;
-import java.util.Date;
 import lombok.RequiredArgsConstructor;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -40,9 +38,7 @@ public final class TrolleyGameEventListener implements GameEventListener {
             NamedTextColor.RED))));
       }
     }
-    if (GameCore.getInstance().shouldBan()) {
-      player.getPlayer().ban("오징어게임에서 탈락했습니다!", (Date) null, "", true);
-    }
+    context.tryBanPlayer(player);
   }
 
   @Override

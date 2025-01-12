@@ -1,12 +1,11 @@
 package io.github.singlerr.admin.commands;
 
-import io.github.singlerr.admin.CommandContexts;
-import io.github.singlerr.sg.core.utils.Transform;
+import io.github.singlerr.sg.core.utils.PlayerUtils;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.Style;
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -14,7 +13,6 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
-import org.slf4j.helpers.MessageFormatter;
 
 public final class MagicWandCommand implements CommandExecutor {
 
@@ -26,26 +24,9 @@ public final class MagicWandCommand implements CommandExecutor {
   @Override
   public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command,
                            @NotNull String label, @NotNull String[] args) {
-    if (args.length > 0) {
-      Player player = (Player) sender;
-      if (args[0].equalsIgnoreCase("cancel")) {
-        CommandContexts.end(player.getUniqueId());
-        sender.sendMessage(Component.text("비활성화").style(Style.style(NamedTextColor.YELLOW)));
-        return false;
-      }
-
-      String modelLocation = args[0];
-
-      Vector3f t = args.length > 1 ? parseVector(args[1]) : null;
-      Quaternionf r = args.length > 2 ? parseQuaternion(args[2]) : null;
-      Vector3f s = args.length > 3 ? parseVector(args[3]) : null;
-
-      CommandContexts.begin(player.getUniqueId(),
-          new CommandContexts.Context(modelLocation, new Transform(t, r, s)));
-      sender.sendMessage(Component.text(
-          MessageFormatter.basicArrayFormat("이제 블레이즈 막대로 우클릭하여 다음 모델 생성: {}, {}",
-              new Object[] {modelLocation})).style(
-          Style.style(NamedTextColor.YELLOW)));
+    Player p = Bukkit.getPlayer(args[0]);
+    if (p != null) {
+      PlayerUtils.enableGlowing(p, List.of((Player) sender), ChatColor.AQUA);
     }
     return false;
   }

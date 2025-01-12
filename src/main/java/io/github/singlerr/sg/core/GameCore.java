@@ -1,5 +1,6 @@
 package io.github.singlerr.sg.core;
 
+import fr.skytasul.glowingentities.GlowingEntities;
 import io.github.singlerr.sg.core.commands.GameCommands;
 import io.github.singlerr.sg.core.network.NetworkRegistry;
 import io.github.singlerr.sg.core.network.PacketRegistry;
@@ -13,6 +14,7 @@ import io.github.singlerr.sg.core.registry.Registry;
 import io.github.singlerr.sg.core.registry.impl.DefaultGameRegistry;
 import io.github.singlerr.sg.core.registry.impl.RegistryFactory;
 import io.github.singlerr.sg.core.setup.GameSettings;
+import io.github.singlerr.sg.core.utils.PlayerUtils;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
@@ -52,6 +54,7 @@ public final class GameCore extends JavaPlugin {
 
   @Override
   public void onEnable() {
+    PlayerUtils.setGlowingManager(new GlowingEntities(instance));
     log.info("Waiting for all other plugins fully loaded");
     Watcher watcher = new Watcher(this::allPluginsEnabled, this::load);
     watcher.runTaskTimer(instance, 0L, 1L);

@@ -1,11 +1,10 @@
 package io.github.singlerr.dalgona.game;
 
-import io.github.singlerr.sg.core.GameCore;
 import io.github.singlerr.sg.core.context.GameContext;
 import io.github.singlerr.sg.core.context.GamePlayer;
 import io.github.singlerr.sg.core.context.GameRole;
 import io.github.singlerr.sg.core.events.GameEventListener;
-import java.util.Date;
+import io.github.singlerr.sg.core.utils.PlayerUtils;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.Style;
@@ -48,9 +47,8 @@ public final class DalgonaGameEventListener implements GameEventListener {
                     NamedTextColor.RED))));
       }
     }
-    if (GameCore.getInstance().shouldBan()) {
-      player.getPlayer().ban("오징어게임에서 탈락했습니다!", (Date) null, "", true);
-    }
+
+    context.tryBanPlayer(player);
   }
 
   @Override
@@ -72,21 +70,24 @@ public final class DalgonaGameEventListener implements GameEventListener {
 
       ctx.end();
     }
+
     if (timeIndicator != null) {
       int totalSecs = (int) (timeLeft / 1000);
       int minutes = totalSecs / 60;
       int seconds = totalSecs % 60;
 
+      int size = ctx.getPlayers(PlayerDalgonaStatus.SUCCESS).size();
+      String color = size > ctx.getCutoff() ? "§c" : "§f";
       timeIndicator.setProgress((double) timeLeft / (double) timeLimit);
-      timeIndicator.setTitle(MessageFormatter.basicArrayFormat("남은 시간: {}분 {}초, 선착순 {}/{} 명",
-          new Object[] {minutes, seconds, ctx.getPlayers(PlayerDalgonaStatus.SUCCESS).size(),
-              ctx.getCutoff()}));
+      timeIndicator.setTitle(
+          MessageFormatter.basicArrayFormat("남은 시간: {}분 {}초, 선착순 " + color + "{}§f/{} 명",
+              new Object[] {minutes, seconds, ctx.getPlayers(PlayerDalgonaStatus.SUCCESS).size(),
+                  ctx.getCutoff()}));
     }
   }
 
   @Override
   public void onStart(GameContext context) {
-
   }
 
   @Override
@@ -99,6 +100,8 @@ public final class DalgonaGameEventListener implements GameEventListener {
       timeIndicator = null;
     }
 
+    PlayerUtils.disableGlowing(ctx.getOnlinePlayers(GameRole.TROY.getLevel()),
+        ctx.getOnlinePlayers(GameRole.ADMIN));
   }
 
   @Override

@@ -20,8 +20,8 @@ public class RLGLGameSettings implements GameSettings {
   private Region deadRegion = new Region(null, null);
 
   private float startDelay = 1f;
-  private float greenLightTurnDelay = 3f;
-  private float redLightTurnDelay = 3f;
+  private float greenLightTurnDelay = 1f;
+  private float redLightTurnDelay = 1f;
 
   private SoundSet soundOne = new SoundSet("rlgl.preset1", 4.0f);
   private SoundSet soundTwo = new SoundSet("rlgl.preset2", 5.0f);

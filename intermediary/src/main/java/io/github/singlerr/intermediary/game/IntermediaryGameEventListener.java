@@ -1,13 +1,11 @@
 package io.github.singlerr.intermediary.game;
 
 import io.github.singlerr.intermediary.Intermediary;
-import io.github.singlerr.sg.core.GameCore;
 import io.github.singlerr.sg.core.context.GameContext;
 import io.github.singlerr.sg.core.context.GamePlayer;
 import io.github.singlerr.sg.core.context.GameRole;
 import io.github.singlerr.sg.core.events.GameEventListener;
 import io.github.singlerr.sg.core.utils.PlayerUtils;
-import java.util.Date;
 import lombok.extern.slf4j.Slf4j;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -37,6 +35,9 @@ public final class IntermediaryGameEventListener implements GameEventListener {
 
         if (isUser) {
           context.assignNumberName(player);
+          player.sendMessage(Component.text("당신의 번호는 ").append(
+              Component.text(player.getUserNumber()).style(Style.style(NamedTextColor.AQUA))
+                  .append(Component.text("번 입니다.")).style(Style.style(NamedTextColor.YELLOW))));
         } else {
           player.setUserDisplayName(Component.text("?"));
         }
@@ -62,9 +63,7 @@ public final class IntermediaryGameEventListener implements GameEventListener {
       }
     }
 
-    if (GameCore.getInstance().shouldBan()) {
-      player.getPlayer().ban("오징어게임에서 탈락했습니다!", (Date) null, "", true);
-    }
+    context.tryBanPlayer(player);
   }
 
   @Override
