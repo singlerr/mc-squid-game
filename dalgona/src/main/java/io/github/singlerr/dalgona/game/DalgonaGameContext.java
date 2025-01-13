@@ -21,6 +21,7 @@ import lombok.Setter;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.Style;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
@@ -122,6 +123,10 @@ public class DalgonaGameContext extends GameContext {
     ItemStack dalgonaItem = new ItemStack(getGameSettings().getDalgonaType());
     ItemMeta meta = dalgonaItem.getItemMeta();
     meta.displayName(Component.text("달고나").style(Style.style(NamedTextColor.YELLOW)));
+    meta.lore(
+        List.of(Component.text("땅에 설치 후 우클릭").style(Style.style(NamedTextColor.YELLOW).decorate(
+            TextDecoration.BOLD))));
+
     dalgonaItem.setItemMeta(meta);
     for (GamePlayer player : getPlayers()) {
       if (!player.available()) {

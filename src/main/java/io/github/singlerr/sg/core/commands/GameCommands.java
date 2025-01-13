@@ -101,6 +101,7 @@ public final class GameCommands implements CommandExecutor, TabCompleter {
           GameSettings s = storage.getLoadedSettings().getById(id);
           g.getGameSetup().getSettings(s);
         }
+        infoCallback(sender, "리로드 완료");
       } catch (IOException e) {
         errorCallback(sender, "리로드에 실패했습니다. games.json 파일이 있는지 확인하세요.");
       }

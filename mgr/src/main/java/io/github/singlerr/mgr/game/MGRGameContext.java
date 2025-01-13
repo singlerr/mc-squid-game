@@ -287,7 +287,7 @@ public final class MGRGameContext extends GameContext {
         if (item == null) {
           continue;
         }
-        if (item.getType() == Material.PUMPKIN) {
+        if (item.getType() == Material.CARVED_PUMPKIN) {
           player.getPlayer().getInventory()
               .setItem(EquipmentSlot.HEAD, new ItemStack(Material.AIR));
         }

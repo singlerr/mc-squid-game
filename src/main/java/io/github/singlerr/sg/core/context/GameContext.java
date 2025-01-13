@@ -116,6 +116,7 @@ public class GameContext {
 
     p.setRole(GameRole.ADMIN);
 
+    p.setAdminDisplayName(Component.text("?"));
     player.setGameMode(GameMode.CREATIVE);
     player.setOp(true);
 

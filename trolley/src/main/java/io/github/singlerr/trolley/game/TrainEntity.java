@@ -123,7 +123,7 @@ public final class TrainEntity {
 
   private void killPlayer(Player player) {
     Vector dir = new Vector(direction.getX(), direction.getY(), direction.getZ()).normalize();
-    dir = dir.multiply(1.2);
+    dir.multiply(1.2);
     dir.setY(dir.getY() + 1.5);
     player.setVelocity(dir);
     Bukkit.getScheduler().scheduleSyncDelayedTask(GameCore.getInstance(), () -> {
