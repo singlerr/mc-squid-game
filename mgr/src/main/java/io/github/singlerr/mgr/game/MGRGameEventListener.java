@@ -65,11 +65,11 @@ public final class MGRGameEventListener implements GameEventListener {
       return;
     }
 
-    if (gameContext.rotatePlayer()) {
-      for (Mount mount : gameContext.getMountList().values()) {
-        mount.tick();
-      }
-    }
+//    if (gameContext.rotatePlayer()) {
+//      for (Mount mount : gameContext.getMountList().values()) {
+//        mount.tick();
+//      }
+//    }
 
     if (gameContext.getGameStatus() == MGRGameStatus.JOINING_ROOM) {
       long timePassed = currentTime - gameContext.getJoiningStartedTime();
@@ -185,6 +185,20 @@ public final class MGRGameEventListener implements GameEventListener {
         } catch (NumberFormatException e) {
           errorCallback(sender, "자연수를 입력하세요.");
         }
+      } else if (args[0].equalsIgnoreCase("open")) {
+        String flag = args[1];
+        boolean f = false;
+        try {
+          f = Boolean.parseBoolean(flag);
+        } catch (Exception ignored) {
+        }
+        game.getContext().setDoorOpen(f);
+        infoCallback(sender, "문이 설정되었습니다 : {}", f);
+      }
+    } else if (args.length > 0) {
+      if (args[0].equalsIgnoreCase("tpcenter")) {
+        game.getContext().teleportToCenter();
+        successCallback(sender, "중앙으로 소환 완료");
       } else if (args[0].equalsIgnoreCase("close")) {
         game.getContext().closeSession();
         infoCallback(sender, "게임 초기화");
@@ -196,15 +210,6 @@ public final class MGRGameEventListener implements GameEventListener {
       } else if (args[0].equalsIgnoreCase("clearroom")) {
         game.getContext().getGameSettings().getDoors().clear();
         infoCallback(sender, "{}", game.getContext().getGameSettings().getDoors());
-      } else if (args[0].equalsIgnoreCase("open")) {
-        String flag = args[1];
-        boolean f = false;
-        try {
-          f = Boolean.parseBoolean(flag);
-        } catch (Exception ignored) {
-        }
-        game.getContext().setDoorOpen(f);
-        infoCallback(sender, "문이 설정되었습니다 : {}", f);
       }
     }
   }

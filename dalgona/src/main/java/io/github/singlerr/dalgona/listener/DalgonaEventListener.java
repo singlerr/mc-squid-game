@@ -15,6 +15,7 @@ import io.papermc.paper.event.player.AsyncChatEvent;
 import lombok.AllArgsConstructor;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -52,6 +53,14 @@ public final class DalgonaEventListener extends InteractableListener {
 
   @EventHandler
   public void banPlayer(PlayerRespawnEvent event) {
+    if (!game.getContext().shouldBanOnRespawn(event.getPlayer())) {
+      game.getContext().respawnTroy(event.getPlayer());
+      Location spawnLoc = GameCore.getInstance().getSpawnLocation();
+      if (spawnLoc != null) {
+        event.setRespawnLocation(spawnLoc);
+      }
+      return;
+    }
     if (Bukkit.getServer().getBanList(BanListType.PROFILE)
         .isBanned(event.getPlayer().getPlayerProfile())) {
       event.getPlayer().kick(Component.text("오징어 게임에서 탈락했습니다!"));
@@ -128,7 +137,9 @@ public final class DalgonaEventListener extends InteractableListener {
     Player player = event.getPlayer();
     GamePlayer gamePlayer;
     if ((gamePlayer = game.getContext().getPlayer(player.getUniqueId())) != null) {
-      game.getContext().kickPlayer(gamePlayer);
+      if (gamePlayer.getRole().getLevel() < GameRole.ADMIN.getLevel()) {
+        game.getContext().kickPlayer(gamePlayer);
+      }
     }
   }
 

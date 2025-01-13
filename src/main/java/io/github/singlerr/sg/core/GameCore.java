@@ -25,6 +25,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -166,6 +167,19 @@ public final class GameCore extends JavaPlugin {
     for (Listener l : eventReg.values()) {
       getServer().getPluginManager().registerEvents(l, instance);
     }
+  }
+
+  public void reload() {
+    reloadConfig();
+  }
+
+  public Location getSpawnLocation() {
+    return getConfig().contains("spawn_loc") ? getConfig().getLocation("spawn_loc") : null;
+  }
+
+  public void setSpawnLocation(Location location) {
+    getConfig().set("spawn_loc", location);
+    saveConfig();
   }
 
   public String getAdminSkinUrl() {

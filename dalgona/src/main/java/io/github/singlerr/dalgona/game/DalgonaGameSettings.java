@@ -12,7 +12,7 @@ public final class DalgonaGameSettings implements GameSettings {
   private Material dalgonaType = Material.MANGROVE_LEAVES;
 
   private Map<String, Dalgona> dalgonaList;
-  private float time = 3 * 60;
+  private float time = 30 * 60;
 
   public DalgonaGameSettings() {
     dalgonaList = new HashMap<>();

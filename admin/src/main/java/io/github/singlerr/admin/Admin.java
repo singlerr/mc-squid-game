@@ -2,7 +2,6 @@ package io.github.singlerr.admin;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import io.github.singlerr.admin.commands.MagicWandCommand;
 import io.github.singlerr.admin.network.PacketGameInfo;
 import io.github.singlerr.admin.network.PacketPlayerInfoFragment;
 import io.github.singlerr.admin.network.PacketRequestInfo;

@@ -1,5 +1,6 @@
 package io.github.singlerr.sg.rlgl.listener;
 
+import com.destroystokyo.paper.event.player.PlayerJumpEvent;
 import io.github.singlerr.sg.core.GameCore;
 import io.github.singlerr.sg.core.context.GameContext;
 import io.github.singlerr.sg.core.context.GamePlayer;
@@ -19,6 +20,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.Style;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.block.Action;
@@ -82,6 +84,28 @@ public final class RLGLEventListener extends InteractableListener {
         }
       }
     }
+  }
+
+  @EventHandler
+  public void onJump(PlayerJumpEvent event) {
+    RLGLGameContext context = game.getGameContext();
+    GamePlayer player = context.getPlayer(event.getPlayer().getUniqueId());
+    if (player == null) {
+      return;
+    }
+    if (!player.available()) {
+      return;
+    }
+    if (player.getRole().getLevel() >= GameRole.ADMIN.getLevel()) {
+      return;
+    }
+
+    RLGLGameSettings settings = (RLGLGameSettings) context.getSettings();
+    if (!settings.getDeadRegion().isIn(player.getPlayer().getLocation())) {
+      return;
+    }
+
+    event.setCancelled(true);
   }
 
   @EventHandler
@@ -149,6 +173,14 @@ public final class RLGLEventListener extends InteractableListener {
 
   @EventHandler
   public void banPlayer(PlayerRespawnEvent event) {
+    if (!game.getGameContext().shouldBanOnRespawn(event.getPlayer())) {
+      game.getGameContext().respawnTroy(event.getPlayer());
+      Location spawnLoc = GameCore.getInstance().getSpawnLocation();
+      if (spawnLoc != null) {
+        event.setRespawnLocation(spawnLoc);
+      }
+      return;
+    }
     if (Bukkit.getServer().getBanList(BanListType.PROFILE)
         .isBanned(event.getPlayer().getPlayerProfile())) {
       event.getPlayer().kick(Component.text("오징어 게임에서 탈락했습니다!"));
@@ -161,7 +193,9 @@ public final class RLGLEventListener extends InteractableListener {
     Player player = event.getPlayer();
     GamePlayer gamePlayer;
     if ((gamePlayer = game.getGameContext().getPlayer(player.getUniqueId())) != null) {
-      game.getGameContext().kickPlayer(gamePlayer);
+      if (gamePlayer.getRole().getLevel() < GameRole.ADMIN.getLevel()) {
+        game.getGameContext().kickPlayer(gamePlayer);
+      }
     }
   }
 

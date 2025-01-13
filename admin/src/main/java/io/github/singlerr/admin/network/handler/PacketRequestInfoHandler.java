@@ -74,7 +74,7 @@ public final class PacketRequestInfoHandler implements PacketHandler<PacketReque
           pending.remove(player.getUniqueId());
           return;
         }
-        int currentSize = currentGame.context().getPlayerMap().size();
+        int currentSize = currentGame.context().getPlayers(GameRole.TROY.getLevel()).size();
         infoPacket = new PacketGameInfo(id, new GameHistory(id,
             currentGame.context().getInitialPlayerSize() < currentSize ? currentSize :
                 currentGame.context().getInitialPlayerSize(), currentSize),

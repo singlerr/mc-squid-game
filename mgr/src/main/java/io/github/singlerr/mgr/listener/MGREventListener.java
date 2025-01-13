@@ -171,17 +171,17 @@ public final class MGREventListener extends InteractableListener {
       int roomNum = entry.getKey();
       Region r = entry.getValue();
       // check in -> in;
-      if (r.isIn(to) && r.isIn(from)) {
+      if (r.isInStrict(to) && r.isInStrict(from)) {
         continue;
       }
       // check in -> out
-      if (!r.isIn(to) && r.isIn(from)) {
+      if (!r.isInStrict(to) && r.isInStrict(from)) {
         AtomicInteger count = context.getPlayerCounts().get(roomNum);
         count.decrementAndGet();
         continue;
       }
       // check out -> in
-      if (r.isIn(to) && !r.isIn(from)) {
+      if (r.isInStrict(to) && !r.isInStrict(from)) {
         AtomicInteger count = context.getPlayerCounts().get(roomNum);
         if (count.incrementAndGet() >= context.getPlayerCount()) {
           Location loc = context.getGameSettings().getDoors().get(roomNum);
@@ -192,9 +192,65 @@ public final class MGREventListener extends InteractableListener {
     }
   }
 
+  @EventHandler
+  public void limitPlayerDistance(PlayerMoveEvent event) {
+    MGRGameContext context = game.getContext();
+    GamePlayer gamePlayer = context.getPlayer(event.getPlayer().getUniqueId());
+    if (gamePlayer == null) {
+      return;
+    }
+
+    if (gamePlayer.getRole().getLevel() > GameRole.TROY.getLevel()) {
+      return;
+    }
+
+    if (!context.lockPlayer()) {
+      return;
+    }
+
+    if (context.getPillar() == null) {
+      return;
+    }
+
+    Location loc = context.getPillar().getLocation();
+    double d = loc.distanceSquared(event.getTo());
+    double limit = context.getGameSettings().getLockDistance();
+    limit *= limit;
+    if (d >= limit) {
+      event.getPlayer().teleport(event.getFrom());
+    }
+  }
+
+//  @EventHandler
+//  public void lockPlayer(PlayerMoveEvent event) {
+//    MGRGameContext context = game.getContext();
+//    GamePlayer gamePlayer = context.getPlayer(event.getPlayer().getUniqueId());
+//    if (gamePlayer == null) {
+//      return;
+//    }
+//
+//    if (gamePlayer.getRole().getLevel() > GameRole.TROY.getLevel()) {
+//      return;
+//    }
+//
+//    if(! context.lockPlayer()){
+//      return;
+//    }
+//
+//    event.setCancelled(true);
+//  }
+
 
   @EventHandler
   public void banPlayer(PlayerRespawnEvent event) {
+    if (!game.getContext().shouldBanOnRespawn(event.getPlayer())) {
+      game.getContext().respawnTroy(event.getPlayer());
+      Location spawnLoc = GameCore.getInstance().getSpawnLocation();
+      if (spawnLoc != null) {
+        event.setRespawnLocation(spawnLoc);
+      }
+      return;
+    }
     if (Bukkit.getServer().getBanList(BanListType.PROFILE)
         .isBanned(event.getPlayer().getPlayerProfile())) {
       event.getPlayer().kick(Component.text("오징어 게임에서 탈락했습니다!"));
@@ -207,7 +263,9 @@ public final class MGREventListener extends InteractableListener {
     MGRGameContext context = game.getContext();
     GamePlayer gamePlayer;
     if ((gamePlayer = context.getPlayer(player.getUniqueId())) != null) {
-      context.kickPlayer(gamePlayer);
+      if (gamePlayer.getRole().getLevel() < GameRole.ADMIN.getLevel()) {
+        context.kickPlayer(gamePlayer);
+      }
     }
   }
 

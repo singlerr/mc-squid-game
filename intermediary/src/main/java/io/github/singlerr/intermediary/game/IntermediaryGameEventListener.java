@@ -35,9 +35,10 @@ public final class IntermediaryGameEventListener implements GameEventListener {
 
         if (isUser) {
           context.assignNumberName(player);
-          player.sendMessage(Component.text("당신의 번호는 ").append(
-              Component.text(player.getUserNumber()).style(Style.style(NamedTextColor.AQUA))
-                  .append(Component.text("번 입니다.")).style(Style.style(NamedTextColor.YELLOW))));
+          player.sendMessage(
+              Component.text("당신의 번호는 ").style(Style.style(NamedTextColor.YELLOW)).append(
+                  Component.text(player.getUserNumber()).style(Style.style(NamedTextColor.AQUA))
+                      .append(Component.text("번 입니다.").style(Style.style(NamedTextColor.YELLOW)))));
         } else {
           player.setUserDisplayName(Component.text("?"));
         }

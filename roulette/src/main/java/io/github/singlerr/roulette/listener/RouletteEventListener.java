@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import lombok.RequiredArgsConstructor;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.entity.PlayerDeathEvent;
@@ -52,6 +53,14 @@ public final class RouletteEventListener extends InteractableListener {
 
   @EventHandler
   public void banPlayer(PlayerRespawnEvent event) {
+    if (!game.getContext().shouldBanOnRespawn(event.getPlayer())) {
+      game.getContext().respawnTroy(event.getPlayer());
+      Location spawnLoc = GameCore.getInstance().getSpawnLocation();
+      if (spawnLoc != null) {
+        event.setRespawnLocation(spawnLoc);
+      }
+      return;
+    }
     if (Bukkit.getServer().getBanList(BanListType.PROFILE)
         .isBanned(event.getPlayer().getPlayerProfile())) {
       event.getPlayer().kick(Component.text("오징어 게임에서 탈락했습니다!"));
@@ -64,7 +73,9 @@ public final class RouletteEventListener extends InteractableListener {
     RouletteGameContext context = game.getContext();
     GamePlayer gamePlayer;
     if ((gamePlayer = context.getPlayer(player.getUniqueId())) != null) {
-      context.kickPlayer(gamePlayer);
+      if (gamePlayer.getRole().getLevel() < GameRole.ADMIN.getLevel()) {
+        context.kickPlayer(gamePlayer);
+      }
     }
   }
 

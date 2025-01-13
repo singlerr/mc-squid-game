@@ -4,8 +4,8 @@ import io.github.singlerr.sg.core.context.GamePlayer;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import net.minecraft.util.Mth;
+import org.bukkit.Location;
 import org.bukkit.entity.Player;
-import org.bukkit.util.Vector;
 import org.joml.Vector3f;
 
 @Slf4j
@@ -36,11 +36,9 @@ public final class Mount {
     currentPos.rotateY(Mth.TWO_PI / (20 * 20));
 
     Vector3f pos = new Vector3f(currentPos);
-    pos.add(center.x, 0, center.z).add(0, 1, 0);
+    pos.add(center.x, 0, center.z);
 
-    Vector playerPos = p.getLocation().toVector();
-    Vector dir = new Vector(pos.x, pos.y, pos.z).subtract(playerPos);
-    player.getPlayer().setVelocity(new Vector(dir.getX(), 0, dir.getZ()));
+    p.teleport(new Location(p.getWorld(), pos.x, pos.y, pos.z, p.getYaw(), p.getPitch()));
   }
 
   public void remove() {

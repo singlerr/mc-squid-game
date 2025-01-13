@@ -5,6 +5,8 @@ import io.github.singlerr.sg.core.context.GameRole;
 import io.github.singlerr.sg.core.utils.EntitySerializable;
 import io.github.singlerr.sg.core.utils.Region;
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -34,6 +36,8 @@ public final class TrainEntity {
   private Vector3f originalTranslation;
   private Display display;
 
+  private Set<UUID> killedPlayers;
+
   public TrainEntity(TrolleyGameContext context, Train train, Entity entity, long duration,
                      float radius,
                      Region railway) {
@@ -47,7 +51,6 @@ public final class TrainEntity {
     this.radius = radius;
     this.end = false;
     this.started = false;
-
   }
 
   public void init() {
@@ -120,9 +123,14 @@ public final class TrainEntity {
 
   private void killPlayer(Player player) {
     Vector dir = new Vector(direction.getX(), direction.getY(), direction.getZ()).normalize();
+    dir = dir.multiply(1.2);
+    dir.setY(dir.getY() + 1.5);
     player.setVelocity(dir);
     Bukkit.getScheduler().scheduleSyncDelayedTask(GameCore.getInstance(), () -> {
-      player.setHealth(0);
+      // prevent player killed twice or more
+      if (player.getHealth() > 0) {
+        player.setHealth(0);
+      }
     }, 5L);
   }
 

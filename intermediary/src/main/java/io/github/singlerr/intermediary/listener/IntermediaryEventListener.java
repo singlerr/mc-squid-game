@@ -10,6 +10,7 @@ import io.papermc.paper.ban.BanListType;
 import io.papermc.paper.event.player.AsyncChatEvent;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.entity.PlayerDeathEvent;
@@ -48,26 +49,31 @@ public final class IntermediaryEventListener extends InteractableListener {
 
   @EventHandler
   public void onDeath(PlayerDeathEvent event) {
+    event.deathMessage(null);
     Player player = event.getPlayer();
     GamePlayer gamePlayer;
     if ((gamePlayer = context.getContext().getPlayer(player.getUniqueId())) != null) {
-      context.getContext().kickPlayer(gamePlayer);
+      if (gamePlayer.getRole().getLevel() < GameRole.ADMIN.getLevel()) {
+        context.getContext().kickPlayer(gamePlayer);
+      }
     }
 
   }
 
   @EventHandler
   public void banPlayer(PlayerRespawnEvent event) {
+    if (!context.getContext().shouldBanOnRespawn(event.getPlayer())) {
+      context.getContext().respawnTroy(event.getPlayer());
+      Location spawnLoc = GameCore.getInstance().getSpawnLocation();
+      if (spawnLoc != null) {
+        event.setRespawnLocation(spawnLoc);
+      }
+      return;
+    }
     if (Bukkit.getServer().getBanList(BanListType.PROFILE)
         .isBanned(event.getPlayer().getPlayerProfile())) {
       event.getPlayer().kick(Component.text("오징어 게임에서 탈락했습니다!"));
     }
-  }
-
-
-  @EventHandler
-  public void removeDeathMessage(PlayerDeathEvent event) {
-    event.deathMessage(null);
   }
 
   @EventHandler

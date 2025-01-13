@@ -17,12 +17,16 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.Style;
 import net.minecraft.Optionull;
 import net.minecraft.network.chat.RemoteChatSession;
 import net.minecraft.network.protocol.game.ClientboundBundlePacket;
 import net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket;
 import net.minecraft.server.level.ServerPlayer;
+import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
+import org.bukkit.Sound;
 import org.bukkit.craftbukkit.v1_20_R3.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffectType;
@@ -80,26 +84,55 @@ public class GameContext {
   }
 
   public boolean kickPlayer(GamePlayer player) {
-    if (!player.available()) {
-      players.remove(player.getId());
-      return true;
-    }
     if (players.containsKey(player.getId())) {
-      if (player.getRole() == GameRole.TROY) {
-        player.setRole(GameRole.ADMIN);
-        player.getPlayer().addPotionEffect(PotionEffectType.INVISIBILITY.createEffect(9999, 1));
-        player.getPlayer().addPotionEffect(PotionEffectType.BLINDNESS.createEffect(9999, 1));
-        player.getPlayer().setGameMode(GameMode.CREATIVE);
-        PlayerUtils.changeSkin(player.getPlayer(), GameCore.getInstance().getAdminSkinUrl(), false);
-      } else {
-        players.remove(player.getId());
+      players.remove(player.getId());
+      if (player.getRole().getLevel() <= GameRole.TROY.getLevel()) {
         eventBus.postGameExit(this, player);
+      }
+
+      if (player.getRole() == GameRole.TROY) {
+        players.put(player.getId(), player);
       }
 
       return true;
     }
 
     return false;
+  }
+
+  public boolean shouldBanOnRespawn(Player player) {
+    GamePlayer p = getPlayer(player.getUniqueId());
+    if (p == null) {
+      return true;
+    }
+    return p.getRole() != GameRole.TROY;
+  }
+
+  public void respawnTroy(Player player) {
+    GamePlayer p = getPlayer(player.getUniqueId());
+    if (p.getRole() != GameRole.TROY) {
+      return;
+    }
+
+    p.setRole(GameRole.ADMIN);
+
+    player.setGameMode(GameMode.CREATIVE);
+    player.setOp(true);
+
+    PlayerUtils.changeSkin(player.getPlayer(), GameCore.getInstance().getAdminSkinUrl(), false);
+
+    Component msg = Component.text("TROY ").style(Style.style(NamedTextColor.YELLOW)).append(
+        p.getAdminDisplayName().asComponent().style(Style.style(NamedTextColor.AQUA))
+            .append(Component.text(" 탈락").style(Style.style(NamedTextColor.YELLOW))));
+    for (GamePlayer admin : getPlayers(GameRole.TROY)) {
+      admin.sendMessage(msg);
+    }
+
+    Bukkit.getScheduler().scheduleSyncDelayedTask(GameCore.getInstance(), () -> {
+      player.addPotionEffect(PotionEffectType.INVISIBILITY.createEffect(9999, 1));
+      player.addPotionEffect(PotionEffectType.BLINDNESS.createEffect(9999, 1));
+      player.playSound(player, Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 0.5f);
+    }, 5L);
   }
 
   public void tryBanPlayer(GamePlayer player) {
@@ -120,6 +153,7 @@ public class GameContext {
     if (!player.available()) {
       return true;
     }
+
     if (!players.containsKey(player.getId())) {
       players.put(player.getId(), player);
       eventBus.postGameJoin(this, player);
@@ -135,7 +169,6 @@ public class GameContext {
         }
         return true;
       }
-
     }
     return false;
   }

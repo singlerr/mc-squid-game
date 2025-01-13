@@ -10,12 +10,15 @@ import io.github.singlerr.sg.core.context.GameContext;
 import io.github.singlerr.sg.core.context.GamePlayer;
 import io.github.singlerr.sg.core.context.GameRole;
 import io.github.singlerr.sg.core.context.Gender;
+import io.github.singlerr.sg.core.setup.GameSettings;
 import io.github.singlerr.sg.core.utils.PlayerUtils;
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.Style;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.apache.commons.lang3.EnumUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
@@ -93,6 +96,11 @@ public final class GameCommands implements CommandExecutor, TabCompleter {
       }
       try {
         storage.loadSettings();
+        for (String id : games.keys()) {
+          Game g = games.getById(id);
+          GameSettings s = storage.getLoadedSettings().getById(id);
+          g.getGameSetup().getSettings(s);
+        }
       } catch (IOException e) {
         errorCallback(sender, "리로드에 실패했습니다. games.json 파일이 있는지 확인하세요.");
       }
@@ -152,6 +160,94 @@ public final class GameCommands implements CommandExecutor, TabCompleter {
 
         successCallback(sender, "닉네임 재동기화 완료");
       });
+    } else if (subCmd.equalsIgnoreCase("killn")) {
+      if (args.length <= 1) {
+        errorCallback(sender, "플레이어 번호를 입력하세요.");
+        return false;
+      }
+
+      GameLifecycle.GameInfo currentGame = gameLifecycle.getCurrentGame();
+      if (currentGame == null || currentGame.context() == null) {
+        errorCallback(sender, "게임이 진행 중이지 않습니다.");
+        return false;
+      }
+
+      int number;
+      try {
+        number = Integer.parseInt(args[1]);
+      } catch (NumberFormatException e) {
+        errorCallback(sender, "정수를 입력하세요.");
+        return false;
+      }
+
+      GameContext ctx = currentGame.context();
+      Optional<GamePlayer> optPlayer =
+          ctx.getPlayers().stream().filter(p -> p.getUserNumber() == number).findAny();
+      if (optPlayer.isEmpty()) {
+        errorCallback(sender, "{}번 플레이어는 존재하지 않습니다.", number);
+        return false;
+      }
+
+      GamePlayer player = optPlayer.get();
+      if (player.getRole().getLevel() >= GameRole.ADMIN.getLevel()) {
+        errorCallback(sender, "{} 플레이어는 관리자입니다. 탈락시킬 수 없습니다.",
+            PlainTextComponentSerializer.plainText().serialize(player.getAdminDisplayName()));
+        return false;
+      }
+
+      if (player.available()) {
+        player.getPlayer().setHealth(0);
+        successCallback(sender, "{} 플레이어를 탈락시켰습니다. 동시에 사망처리하였습니다.");
+      } else {
+        ctx.kickPlayer(player);
+        infoCallback(sender, "{} 플레이어는 온라인이 아니므로 탈락 처리만 하였습니다.");
+      }
+
+    } else if (subCmd.equalsIgnoreCase("kills")) {
+      if (args.length <= 1) {
+        errorCallback(sender, "플레이어 번호를 입력하세요.");
+        return false;
+      }
+
+      GameLifecycle.GameInfo currentGame = gameLifecycle.getCurrentGame();
+      if (currentGame == null || currentGame.context() == null) {
+        errorCallback(sender, "게임이 진행 중이지 않습니다.");
+        return false;
+      }
+
+      String name = args[1];
+
+      GameContext ctx = currentGame.context();
+      Optional<GamePlayer> optPlayer = ctx.getPlayers().stream()
+          .filter(p -> p.available() && p.getPlayer().getName().equalsIgnoreCase(name)).findAny();
+      if (optPlayer.isEmpty()) {
+        errorCallback(sender, "{} 플레이어는 존재하지 않습니다.", name);
+        return false;
+      }
+
+      GamePlayer player = optPlayer.get();
+      if (player.getRole().getLevel() >= GameRole.ADMIN.getLevel()) {
+        errorCallback(sender, "{} 플레이어는 관리자입니다. 탈락시킬 수 없습니다.",
+            PlainTextComponentSerializer.plainText().serialize(player.getAdminDisplayName()));
+        return false;
+      }
+
+      if (player.available()) {
+        player.getPlayer().setHealth(0);
+        successCallback(sender, "{} 플레이어를 탈락시켰습니다. 동시에 사망처리하였습니다.");
+      } else {
+        ctx.kickPlayer(player);
+        infoCallback(sender, "{} 플레이어는 온라인이 아니므로 탈락 처리만 하였습니다.");
+      }
+
+    } else if (args[0].equalsIgnoreCase("setspawn")) {
+      if (!(sender instanceof Player player)) {
+        errorCallback(sender, "플레이어만 사용가능한 명령어입니다.");
+        return false;
+      }
+
+      GameCore.getInstance().setSpawnLocation(player.getLocation());
+      successCallback(sender, "현재 위치를 스폰 지점으로 설정하였습니다.");
     }
     return true;
   }
@@ -255,7 +351,7 @@ public final class GameCommands implements CommandExecutor, TabCompleter {
     Gender gender = EnumUtils.getEnum(Gender.class, args[1].toUpperCase());
 
     Player player;
-    if (args.length > 3) {
+    if (args.length > 2) {
       String targetPlayerName = args[2];
       Player p = Bukkit.getPlayer(targetPlayerName);
       if (p == null) {
@@ -264,6 +360,7 @@ public final class GameCommands implements CommandExecutor, TabCompleter {
       }
 
       player = p;
+      infoCallback(sender, "타겟 플레이어 설정: {}", p.getName());
     } else {
       player = (Player) sender;
     }

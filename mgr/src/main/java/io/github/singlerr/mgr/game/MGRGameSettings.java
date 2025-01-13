@@ -16,15 +16,22 @@ public final class MGRGameSettings implements GameSettings {
   private Map<Integer, Location> doors = new HashMap<>();
   private Map<Integer, Region> rooms = new HashMap<>();
   private Map<Integer, SoundSet> announcerSounds = new HashMap<>();
-  private SoundSet musicSound = new SoundSet("mgr.music", 35f);
+  private SoundSet musicSound = new SoundSet("mgr.music", 45f);
+  private float musicOffset = 2f;
+
   private EntitySerializable pillarEntity;
   private Location pillarLocation;
-  private float curtainDelay = 5f;
+  private float curtainDelay = 2f;
   private float curtainRadius = 15f;
   private float curtainOffset = 8f;
   private float curtainMoveDistance = 5f;
-  private float joiningRoomTime = 30f;
 
+  private float joiningRoomTime = 40f;
+
+
+  private boolean shouldApplyEffect = true;
+
+  private float lockDistance = 13f;
 
   private Vector3f initialPos;
 
@@ -51,5 +58,7 @@ public final class MGRGameSettings implements GameSettings {
     pillarLocation = o.pillarLocation;
     initialPos = o.initialPos;
     curtainOffset = o.curtainOffset;
+    shouldApplyEffect = o.shouldApplyEffect;
+    lockDistance = o.lockDistance;
   }
 }

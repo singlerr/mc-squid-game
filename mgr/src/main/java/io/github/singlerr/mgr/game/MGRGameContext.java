@@ -44,6 +44,8 @@ import org.bukkit.block.data.Openable;
 import org.bukkit.entity.Display;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.EquipmentSlot;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.BoundingBox;
 import org.bukkit.util.Transformation;
 import org.joml.Vector3f;
@@ -68,6 +70,9 @@ public final class MGRGameContext extends GameContext {
   private Map<UUID, Mount> mountList;
   @Accessors(fluent = true)
   private boolean rotatePlayer;
+  @Accessors(fluent = true)
+  private boolean lockPlayer;
+
 
   public MGRGameContext(Map<UUID, GamePlayer> players,
                         GameStatus status,
@@ -82,6 +87,7 @@ public final class MGRGameContext extends GameContext {
     this.playerCounts = Collections.synchronizedMap(new HashMap<>());
     this.mountList = Collections.synchronizedMap(new HashMap<>());
     this.rotatePlayer = false;
+    this.lockPlayer = false;
     this.glowingColor = ChatColor.AQUA;
   }
 
@@ -112,17 +118,16 @@ public final class MGRGameContext extends GameContext {
     PlayerUtils.disableGlowing(getOnlinePlayers(GameRole.TROY.getLevel()),
         getOnlinePlayers(GameRole.ADMIN));
     // setup mounts
-    float rotationSpeed = 0.01f;
-    setupMounts(rotationSpeed);
+//    float rotationSpeed = 0.01f;
+//    setupMounts(rotationSpeed);
+
+    //lock player
+    teleportToCenter();
+    lockPlayer(true);
 
     // set game status
     gameStatus = MGRGameStatus.PLAYING_MUSIC;
     this.playerCount = playerCount;
-    int offset = random.nextInt(2) - 1;
-
-
-    // create barrier
-    setBarrier();
 
     // move curtain upwards
     Vector3f pos = new Vector3f();
@@ -135,18 +140,43 @@ public final class MGRGameContext extends GameContext {
     // start rotating curtains
     scheduler.enqueue((long) (getGameSettings().getCurtainDelay() * 1000), () -> {
       SoundSet music = getGameSettings().getMusicSound();
-      rotatePlayer(true);
-      interpolator.add((long) ((getGameSettings().getJoiningRoomTime() + offset - 1) * 1000),
+//      rotatePlayer(true);
+
+      interpolator.add(
+          (long) ((music.getDuration() + getGameSettings().getMusicOffset() - 0.5) * 1000),
           (progress) -> {
             float angle = (float) (progress * Math.PI * 4);
             rotate(pillarDisplay, angle, 0);
           });
       this.soundPlayer.enqueue(getPlayers(), music.getSound(),
-          getGameSettings().getJoiningRoomTime() + offset, () -> {
+          music.getDuration() + getGameSettings().getMusicOffset(), () -> {
             Bukkit.getServer().stopSound(SoundStop.named(Key.key(music.getSound())));
             openCurtain();
           });
     });
+  }
+
+  public void teleportToCenter() {
+    List<GamePlayer> players = new ArrayList<>(getPlayers(GameRole.TROY.getLevel()));
+    float radius = getGameSettings().getLockDistance() -
+        (random.nextInt(2) + 2);
+    float angleRatio = 360f / players.size();
+    float angle = 0;
+    Vector3f center = getPillar().getLocation().toVector().toVector3f();
+    for (GamePlayer player : players) {
+      angle += angleRatio + 5;
+      if (!player.available()) {
+        continue;
+      }
+
+      float radian = (float) Math.toRadians(angle);
+      Vector3f playerPos =
+          new Vector3f((float) (radius * Math.cos(radian)), 0, (float) (radius * Math.sin(radian)));
+      playerPos.add(center);
+      Location loc = new Location(getPillar().getWorld(), playerPos.x, playerPos.y, playerPos.z,
+          player.getPlayer().getYaw(), player.getPlayer().getPitch());
+      player.getPlayer().teleport(loc);
+    }
   }
 
   private void setupMounts(float rotationSpeed) {
@@ -159,6 +189,7 @@ public final class MGRGameContext extends GameContext {
     float angle = 0;
     Vector3f center = getPillar().getLocation().toVector().toVector3f();
     for (GamePlayer player : players) {
+      angle += angleRatio;
       if (!player.available()) {
         continue;
       }
@@ -167,12 +198,12 @@ public final class MGRGameContext extends GameContext {
       Vector3f playerPos =
           new Vector3f((float) (radius * Math.cos(radian)), 0, (float) (radius * Math.sin(radian)));
       playerPos.add(center);
+      playerPos.sub(0, 3, 0);
       Location loc = new Location(getPillar().getWorld(), playerPos.x, playerPos.y, playerPos.z);
       player.getPlayer().teleport(loc);
 
       Mount mount = new Mount(player, center, rotationSpeed);
       mountList.put(player.getId(), mount);
-      angle += angleRatio;
     }
   }
 
@@ -186,20 +217,21 @@ public final class MGRGameContext extends GameContext {
   }
 
   public void openCurtain() {
-    rotatePlayer(false);
+//    rotatePlayer(false);
     gameStatus = MGRGameStatus.OPENING_CURTAIN;
     move(getDisplay(pillar), new Vector3f(0, getGameSettings().getCurtainMoveDistance(), 0),
         (int) (getGameSettings().getCurtainDelay() * 20));// move curtain entity upwards
-    scheduler.enqueue((long) (getGameSettings().getCurtainDelay() * 1000L), () -> {
+    startJoiningRoom();
+    scheduler.enqueue((long) ((getGameSettings().getCurtainDelay() / 2f) * 1000L), () -> {
       SoundSet set = getGameSettings().getAnnouncerSounds().get(playerCount);
       if (set == null) {
         log.error("No announcer sounds available for {} player counts.", playerCount);
         return;
       }
-      startJoiningRoom();
       this.soundPlayer.enqueue(getPlayers(), set.getSound(), getGameSettings().getJoiningRoomTime(),
           this::startClosingRoom);
     });
+
   }
 
   public void setDoorOpen(boolean flag) {
@@ -235,11 +267,41 @@ public final class MGRGameContext extends GameContext {
   }
 
   public void startJoiningRoom() {
-    removeMounts();
     gameStatus = MGRGameStatus.JOINING_ROOM;
     joiningStartedTime = System.currentTimeMillis();
-    removeBarrier();
+
     setDoorOpen(true);
+    setPumpkinHead(true);
+    lockPlayer(false);
+  }
+
+  private void setPumpkinHead(boolean flag) {
+    Collection<GamePlayer> players = getPlayers(GameRole.TROY.getLevel());
+
+    if (!flag) {
+      for (GamePlayer player : players) {
+        if (!player.available()) {
+          continue;
+        }
+        ItemStack item = player.getPlayer().getInventory().getItem(EquipmentSlot.HEAD);
+        if (item == null) {
+          continue;
+        }
+        if (item.getType() == Material.PUMPKIN) {
+          player.getPlayer().getInventory()
+              .setItem(EquipmentSlot.HEAD, new ItemStack(Material.AIR));
+        }
+      }
+    } else {
+      for (GamePlayer player : players) {
+        if (!player.available()) {
+          continue;
+        }
+        player.getPlayer().getInventory()
+            .setItem(EquipmentSlot.HEAD, new ItemStack(Material.CARVED_PUMPKIN));
+      }
+    }
+
   }
 
   public void startClosingRoom() {
@@ -276,6 +338,8 @@ public final class MGRGameContext extends GameContext {
     broadcast(
         Component.text("인원 미충족: [").append(Component.join(JoinConfiguration.commas(false), failed))
             .append(Component.text("]")).style(Style.style(NamedTextColor.YELLOW)), GameRole.ADMIN);
+
+    setPumpkinHead(false);
   }
 
   public void closeSession() {
@@ -284,7 +348,6 @@ public final class MGRGameContext extends GameContext {
         (int) (getGameSettings().getCurtainDelay() * 20));
     scheduler.enqueue((long) (getGameSettings().getCurtainDelay() * 1000), () -> {
       gameStatus = MGRGameStatus.IDLE;
-      setBarrier();
     });
   }
 
