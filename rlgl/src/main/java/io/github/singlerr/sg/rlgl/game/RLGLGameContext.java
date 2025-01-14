@@ -74,6 +74,7 @@ public final class RLGLGameContext extends GameContext {
 
   public void start() {
     RLGLGameSettings settings = (RLGLGameSettings) getSettings();
+    playSoundForSpectators(settings.getStartSound());
     this.soundPlayer.enqueue(getPlayers(), settings.getStartSound(), settings.getStartDelay(),
         () -> {
           startTime = System.currentTimeMillis();
@@ -101,6 +102,8 @@ public final class RLGLGameContext extends GameContext {
       display.setInterpolationDuration((int) (getGameSettings().getRedLightTurnDelay() * 20));
       display.setTransformation(t);
     }
+
+    playSoundForSpectators(getGameSettings().getTransitionSound().getSound());
     soundPlayer.enqueue(getPlayers(), getGameSettings().getTransitionSound().getSound(),
         getGameSettings().getRedLightTurnDelay(), () -> {
           rlglStatus = RLGLStatus.RED_LIGHT;
@@ -123,8 +126,10 @@ public final class RLGLGameContext extends GameContext {
         display.setTransformation(t);
       }
     }
+    playSoundForSpectators(getGameSettings().getTransitionSound().getSound());
     soundPlayer.enqueue(getPlayers(), getGameSettings().getTransitionSound().getSound(),
         getGameSettings().getGreenLightTurnDelay(), () -> {
+          playSoundForSpectators(set.getSound());
           this.soundPlayer.enqueue(getPlayers(), set.getSound(), set.getDuration(),
               this::redLight);
         });

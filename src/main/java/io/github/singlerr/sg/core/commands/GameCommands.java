@@ -295,6 +295,7 @@ public final class GameCommands implements CommandExecutor, TabCompleter {
         String slimInput = args[3];
         try {
           boolean isSlim = Boolean.parseBoolean(slimInput);
+          idInput = idInput.replaceAll("(.{8})(.{4})(.{4})(.{4})(.+)", "$1-$2-$3-$4-$5");
           UUID id = UUID.fromString(idInput);
           Bukkit.getScheduler().runTaskAsynchronously(GameCore.getInstance(), () -> {
             infoCallback(sender, "{} 스킨 로드 중...", url);
@@ -337,6 +338,19 @@ public final class GameCommands implements CommandExecutor, TabCompleter {
     } else if (args[0].equalsIgnoreCase("reloadskins")) {
       GameCore.getInstance().reloadSkins();
       successCallback(sender, "모든 스킨 리로드 완료");
+    } else if (args[0].equalsIgnoreCase("spectate")) {
+      if (!(sender instanceof Player player)) {
+        errorCallback(sender, "플레이어만 사용 가능한 명령어입니다.");
+        return false;
+      }
+
+      if (GameCore.getInstance().getSpectators().contains(player.getUniqueId())) {
+        GameCore.getInstance().getSpectators().remove(player.getUniqueId());
+        infoCallback(sender, "관전 비활성화");
+      } else {
+        GameCore.getInstance().getSpectators().add(player.getUniqueId());
+        infoCallback(sender, "관전 활성화");
+      }
     }
     return true;
   }

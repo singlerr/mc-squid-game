@@ -22,9 +22,11 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.function.Supplier;
 import lombok.Getter;
 import lombok.Setter;
@@ -46,23 +48,23 @@ public final class GameCore extends JavaPlugin {
 
   @Getter
   private static GameCore instance;
+  @Getter
+  private final Set<UUID> spectators;
   private GameStorage settingsStorage;
-
   private NetworkRegistry networkRegistry;
   private GameRegistry gameRegistry;
   @Getter
   private GameLifecycle coreLifecycle;
   private GameSetupManager setupManager;
-
   @Accessors(fluent = true)
   @Getter
   @Setter
   private boolean shouldBan = true;
-
   private Map<String, Object> skins;
 
   public GameCore() {
     GameCore.instance = this;
+    this.spectators = new HashSet<>();
   }
 
   @Override

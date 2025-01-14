@@ -154,6 +154,7 @@ public final class TrolleyGameContext extends GameContext {
       return false;
     }
 
+    playSoundForSpectators(getGameSettings().getTrainSound().getSound());
     soundPlayer.enqueue(getPlayers(),
         getGameSettings().getTrainSound().getSound(),
         getGameSettings().getTrainSound().getDuration(), () -> {

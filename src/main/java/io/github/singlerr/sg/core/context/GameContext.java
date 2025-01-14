@@ -40,6 +40,7 @@ import org.bukkit.potion.PotionEffectType;
 public class GameContext {
 
   private static AtomicInteger idCount = new AtomicInteger(0);
+
   private final Map<UUID, GamePlayer> players;
   @Getter(value = AccessLevel.NONE)
   private final GameEventBus eventBus;
@@ -180,6 +181,15 @@ public class GameContext {
       }
     }
     return false;
+  }
+
+  public void playSoundForSpectators(String sound) {
+    for (UUID spectatorId : GameCore.getInstance().getSpectators()) {
+      Player p = Bukkit.getPlayer(spectatorId);
+      if (p != null) {
+        p.playSound(p, sound, 1.0f, 1.0f);
+      }
+    }
   }
 
   public void broadcast(Component component, GameRole role) {

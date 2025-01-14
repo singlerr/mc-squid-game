@@ -150,6 +150,8 @@ public final class MGRGameContext extends GameContext {
             float angle = (float) (progress * Math.PI * 4);
             rotate(pillarDisplay, angle, 0);
           });
+
+      playSoundForSpectators(music.getSound());
       this.soundPlayer.enqueue(getPlayers(), music.getSound(),
           music.getDuration() + getGameSettings().getMusicOffset(), () -> {
             Bukkit.getServer().stopSound(SoundStop.named(Key.key(music.getSound())));
@@ -230,6 +232,7 @@ public final class MGRGameContext extends GameContext {
         log.error("No announcer sounds available for {} player counts.", playerCount);
         return;
       }
+      playSoundForSpectators(set.getSound());
       this.soundPlayer.enqueue(getPlayers(), set.getSound(), getGameSettings().getJoiningRoomTime(),
           this::startClosingRoom);
     });
