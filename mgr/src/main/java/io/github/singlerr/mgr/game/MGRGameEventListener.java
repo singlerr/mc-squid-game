@@ -194,6 +194,15 @@ public final class MGRGameEventListener implements GameEventListener {
         }
         game.getContext().setDoorOpen(f);
         infoCallback(sender, "문이 설정되었습니다 : {}", f);
+      } else if (args[0].equalsIgnoreCase("pumpkin")) {
+        String flag = args[1];
+        boolean f = false;
+        try {
+          f = Boolean.parseBoolean(flag);
+        } catch (Exception ignored) {
+        }
+        game.getContext().setPumpkinHead(f);
+        infoCallback(sender, "플레이어 호박이 설정되었습니다 : {}", f);
       }
     } else if (args.length > 0) {
       if (args[0].equalsIgnoreCase("tpcenter")) {

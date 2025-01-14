@@ -1,5 +1,6 @@
 package io.github.singlerr.sg.core;
 
+import de.maxhenkel.voicechat.api.BukkitVoicechatService;
 import fr.skytasul.glowingentities.GlowingEntities;
 import io.github.singlerr.sg.core.commands.GameCommands;
 import io.github.singlerr.sg.core.network.NetworkRegistry;
@@ -14,18 +15,27 @@ import io.github.singlerr.sg.core.registry.Registry;
 import io.github.singlerr.sg.core.registry.impl.DefaultGameRegistry;
 import io.github.singlerr.sg.core.registry.impl.RegistryFactory;
 import io.github.singlerr.sg.core.setup.GameSettings;
+import io.github.singlerr.sg.core.thirdparty.GameVoicechatPlugin;
 import io.github.singlerr.sg.core.utils.PlayerUtils;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Supplier;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.MemorySection;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -49,6 +59,8 @@ public final class GameCore extends JavaPlugin {
   @Setter
   private boolean shouldBan = true;
 
+  private Map<String, Object> skins;
+
   public GameCore() {
     GameCore.instance = this;
   }
@@ -56,6 +68,7 @@ public final class GameCore extends JavaPlugin {
   @Override
   public void onEnable() {
     PlayerUtils.setGlowingManager(new GlowingEntities(instance));
+    initVoicechatCompat();
     log.info("Waiting for all other plugins fully loaded");
     Watcher watcher = new Watcher(this::allPluginsEnabled, this::load);
     watcher.runTaskTimer(instance, 0L, 1L);
@@ -125,14 +138,72 @@ public final class GameCore extends JavaPlugin {
     getCommand("sg").setTabCompleter(gameCmd);
   }
 
+  public Pair<String, Boolean> getSkin(String id) {
+    if (skins == null) {
+      return null;
+    }
+    if (!skins.containsKey(id)) {
+      return null;
+    }
+
+    Map<String, Object> skin = (Map<String, Object>) skins.get(id);
+
+    return new ImmutablePair<>(skin.get("url").toString(),
+        Boolean.parseBoolean(skin.get("slim").toString()));
+  }
+
+  private Map<String, Object> getMemorySection(ConfigurationSection section, String root) {
+    Map<String, Object> map = new HashMap<>();
+    section = section.getConfigurationSection(root);
+    for (String key : section.getKeys(false)) {
+      map.put(key, section.get(key));
+    }
+
+    return map;
+  }
+
+  public void reloadSkins() {
+    reloadConfig();
+    skins = new HashMap<>();
+    if (getConfig().get("player_skins") instanceof MemorySection section) {
+      for (String key : section.getKeys(false)) {
+        skins.put(key, getMemorySection(section, key));
+      }
+    }
+  }
+
+  public void saveSkins() {
+    getConfig().set("player_skins", skins);
+    saveConfig();
+  }
+
+  public Set<Map.Entry<String, Object>> skinList() {
+    if (skins == null) {
+      return Collections.emptySet();
+    }
+    return skins.entrySet();
+  }
+
+  public void setSkin(String id, String url, boolean isSlim) {
+    Map<String, Object> skin = new HashMap<>();
+    skin.put("url", url);
+    skin.put("slim", isSlim);
+    skins.put(id, skin);
+  }
+
+  public void removeSkin(String id) {
+    skins.remove(id);
+  }
+
   private void loadSettings() {
     if (!getDataFolder().exists()) {
       getDataFolder().mkdir();
       saveDefaultConfig();
       reloadConfig();
     }
+
     saveDefaultConfig();
-    reloadConfig();
+    reloadSkins();
 
     File storageFile = new File(getDataFolder(), "games.json");
     boolean copyDefaults = !storageFile.exists();
@@ -154,6 +225,14 @@ public final class GameCore extends JavaPlugin {
       Game g = gameRegistry.getById(id);
       GameSettings s = settingsStorage.getLoadedSettings().getById(id);
       g.getGameSetup().getSettings(s);
+    }
+  }
+
+  private void initVoicechatCompat() {
+    BukkitVoicechatService service =
+        getServer().getServicesManager().load(BukkitVoicechatService.class);
+    if (service != null) {
+      service.registerPlugin(new GameVoicechatPlugin(instance));
     }
   }
 

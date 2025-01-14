@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 import lombok.Setter;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +28,8 @@ import net.skinsrestorer.api.property.InputDataResult;
 import net.skinsrestorer.api.property.SkinVariant;
 import net.skinsrestorer.api.storage.PlayerStorage;
 import net.skinsrestorer.api.storage.SkinStorage;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
@@ -50,9 +53,15 @@ public class PlayerUtils {
 
   public void changeSkin(Player player, GameRole role, Gender gender) {
     if (role.getLevel() <= GameRole.TROY.getLevel()) {
-      List<String> urls = GameCore.getInstance().getPlayerSkinUrl(gender == Gender.MALE);
-      int idx = random.nextInt(urls.size());
-      changeSkin(player, urls.get(idx), gender == Gender.FEMALE);
+      Pair<String, Boolean> skinUrl =
+          GameCore.getInstance().getSkin(player.getUniqueId().toString());
+      if (skinUrl == null) {
+        // fallback
+        List<String> urls = GameCore.getInstance().getPlayerSkinUrl(gender == Gender.MALE);
+        int idx = random.nextInt(urls.size());
+        skinUrl = new ImmutablePair<>(urls.get(idx), gender == Gender.MALE);
+      }
+      changeSkin(player, skinUrl.getKey(), skinUrl.getValue());
     }
   }
 
@@ -136,6 +145,22 @@ public class PlayerUtils {
       }
     } catch (DataRequestException | MineSkinException e) {
       log.error("Failed to apply skin", e);
+    }
+  }
+
+  public void loadSkin(String skinUrl, boolean slim, Consumer<Throwable> callback) {
+    SkinsRestorer api = SkinsRestorerProvider.get();
+    SkinStorage storage = api.getSkinStorage();
+    try {
+      Optional<InputDataResult> result =
+          storage.findOrCreateSkinData(skinUrl, slim ? SkinVariant.SLIM : SkinVariant.CLASSIC);
+      if (result.isEmpty()) {
+        callback.accept(new Exception("스킨 로드 실패"));
+      } else {
+        callback.accept(null);
+      }
+    } catch (DataRequestException | MineSkinException e) {
+      callback.accept(e);
     }
   }
 

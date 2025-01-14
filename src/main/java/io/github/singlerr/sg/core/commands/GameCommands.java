@@ -14,12 +14,15 @@ import io.github.singlerr.sg.core.setup.GameSettings;
 import io.github.singlerr.sg.core.utils.PlayerUtils;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.Style;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.apache.commons.lang3.EnumUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -32,6 +35,7 @@ import org.slf4j.helpers.MessageFormatter;
 
 public final class GameCommands implements CommandExecutor, TabCompleter {
 
+  private static final String SOUND_MP5 = "mp5.shot";
   private final GameLifecycle gameLifecycle;
   private final GameRegistry games;
   private final GameSetupManager setupManager;
@@ -122,18 +126,48 @@ public final class GameCommands implements CommandExecutor, TabCompleter {
         errorCallback(sender, "권한이 없습니다.");
         return false;
       }
+
       Bukkit.getScheduler().runTaskAsynchronously(GameCore.getInstance(), () -> {
         infoCallback(sender, "관리자 스킨 로드 중...");
-        PlayerUtils.loadSkin(GameCore.getInstance().getAdminSkinUrl(), false);
-        infoCallback(sender, "여성 스킨 로드 중...");
+        PlayerUtils.loadSkin(GameCore.getInstance().getAdminSkinUrl(), false, (t) -> {
+          if (t == null) {
+            successCallback(sender, "성공적으로 관리자 스킨을 로드하였습니다.");
+          } else {
+            errorCallback(sender, "스킨 로드 중 오류가 발생했습니다 : {}", t);
+          }
+        });
+        infoCallback(sender, "비상용 여성 스킨 로드 중...");
         for (String url : GameCore.getInstance().getPlayerSkinUrl(false)) {
-          PlayerUtils.loadSkin(url, true);
+          PlayerUtils.loadSkin(url, true, (t) -> {
+            if (t == null) {
+              successCallback(sender, "성공적으로 {} 스킨을 로드하였습니다.", url);
+            } else {
+              errorCallback(sender, "스킨 로드 중 오류가 발생했습니다 : {}", t);
+            }
+          });
         }
-        infoCallback(sender, "남성 스킨 로드 중...");
+        infoCallback(sender, "비상용 남성 스킨 로드 중...");
         for (String url : GameCore.getInstance().getPlayerSkinUrl(true)) {
-          PlayerUtils.loadSkin(url, false);
+          PlayerUtils.loadSkin(url, false, (t) -> {
+            if (t == null) {
+              successCallback(sender, "성공적으로 {} 스킨을 로드하였습니다.", url);
+            } else {
+              errorCallback(sender, "스킨 로드 중 오류가 발생했습니다 : {}", t);
+            }
+          });
         }
 
+        for (Map.Entry<String, Object> entry : GameCore.getInstance().skinList()) {
+          Pair<String, Boolean> skin = GameCore.getInstance().getSkin(entry.getKey());
+          infoCallback(sender, "{}의 스킨 로드 중", entry.getKey());
+          PlayerUtils.loadSkin(skin.getKey(), skin.getValue(), (t) -> {
+            if (t == null) {
+              successCallback(sender, "성공적으로 {} 스킨을 로드하였습니다.", skin.getKey());
+            } else {
+              errorCallback(sender, "스킨 로드 중 오류가 발생했습니다 : {}", t);
+            }
+          });
+        }
         infoCallback(sender, "스킨 로드 완료");
       });
     } else if (subCmd.equalsIgnoreCase("syncnames")) {
@@ -197,7 +231,10 @@ public final class GameCommands implements CommandExecutor, TabCompleter {
       }
 
       if (player.available()) {
+        player.getPlayer().getWorld()
+            .playSound(player.getPlayer().getLocation(), SOUND_MP5, 1f, 1f);
         player.getPlayer().setHealth(0);
+
         successCallback(sender, "{} 플레이어를 탈락시켰습니다. 동시에 사망처리하였습니다.");
       } else {
         ctx.kickPlayer(player);
@@ -234,6 +271,8 @@ public final class GameCommands implements CommandExecutor, TabCompleter {
       }
 
       if (player.available()) {
+        player.getPlayer().getWorld()
+            .playSound(player.getPlayer().getLocation(), SOUND_MP5, 1f, 1f);
         player.getPlayer().setHealth(0);
         successCallback(sender, "{} 플레이어를 탈락시켰습니다. 동시에 사망처리하였습니다.");
       } else {
@@ -249,6 +288,55 @@ public final class GameCommands implements CommandExecutor, TabCompleter {
 
       GameCore.getInstance().setSpawnLocation(player.getLocation());
       successCallback(sender, "현재 위치를 스폰 지점으로 설정하였습니다.");
+    } else if (args[0].equalsIgnoreCase("addskin")) {
+      if (args.length > 3) {
+        String idInput = args[1];
+        String url = args[2];
+        String slimInput = args[3];
+        try {
+          boolean isSlim = Boolean.parseBoolean(slimInput);
+          UUID id = UUID.fromString(idInput);
+          Bukkit.getScheduler().runTaskAsynchronously(GameCore.getInstance(), () -> {
+            infoCallback(sender, "{} 스킨 로드 중...", url);
+            PlayerUtils.loadSkin(url, isSlim, (t) -> {
+              if (t == null) {
+                successCallback(sender, "성공적으로 {} 스킨을 로드하였습니다.", url);
+                GameCore.getInstance().setSkin(id.toString(), url, isSlim);
+                successCallback(sender, "{}의 스킨을 {}(으)로 설정하였습니다.", id, url);
+              } else {
+                errorCallback(sender, "스킨 로드 중 오류가 발생했습니다 : {}", t);
+              }
+            });
+          });
+        } catch (IllegalArgumentException e) {
+          errorCallback(sender, "알맞은 UUID 형식이 아닙니다.");
+          return false;
+        }
+
+      } else {
+        errorCallback(sender, "/sg addskin [uuid] [url] [slim(true/false)]");
+      }
+    } else if (args[0].equalsIgnoreCase("removeskin")) {
+      if (args.length > 1) {
+        String idInput = args[1];
+        if (GameCore.getInstance().getSkin(idInput) == null) {
+          errorCallback(sender, "{}에 해당하는 스킨이 없습니다.", idInput);
+          return false;
+        }
+
+        GameCore.getInstance().removeSkin(idInput);
+        successCallback(sender, "{}의 스킨을 제거하였습니다.", idInput);
+      }
+    } else if (args[0].equalsIgnoreCase("saveskins")) {
+      GameCore.getInstance().saveSkins();
+      successCallback(sender, "모든 스킨 저장 완료");
+    } else if (args[0].equalsIgnoreCase("listskins")) {
+      for (Map.Entry<String, Object> entry : GameCore.getInstance().skinList()) {
+        infoCallback(sender, "{} -> {}", entry.getKey(), entry.getValue());
+      }
+    } else if (args[0].equalsIgnoreCase("reloadskins")) {
+      GameCore.getInstance().reloadSkins();
+      successCallback(sender, "모든 스킨 리로드 완료");
     }
     return true;
   }
@@ -352,6 +440,7 @@ public final class GameCommands implements CommandExecutor, TabCompleter {
     Gender gender = EnumUtils.getEnum(Gender.class, args[1].toUpperCase());
 
     Player player;
+    boolean silent = false;
     if (args.length > 2) {
       String targetPlayerName = args[2];
       Player p = Bukkit.getPlayer(targetPlayerName);
@@ -361,6 +450,7 @@ public final class GameCommands implements CommandExecutor, TabCompleter {
       }
 
       player = p;
+      silent = true;
       infoCallback(sender, "타겟 플레이어 설정: {}", p.getName());
     } else {
       player = (Player) sender;
@@ -390,7 +480,9 @@ public final class GameCommands implements CommandExecutor, TabCompleter {
     }
 
     gameInfo.context().joinPlayer(new GamePlayer(player, role, gender));
-    infoCallback(player, "게임에 참가했습니다!");
+    if (!silent) {
+      infoCallback(player, "게임에 참가했습니다!");
+    }
   }
 
   private void exitCommand(String id, Game game, CommandSender sender, String[] args) {

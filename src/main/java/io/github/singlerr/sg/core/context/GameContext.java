@@ -1,5 +1,8 @@
 package io.github.singlerr.sg.core.context;
 
+import de.maxhenkel.voicechat.Voicechat;
+import de.maxhenkel.voicechat.voice.common.PlayerState;
+import de.maxhenkel.voicechat.voice.server.Server;
 import io.github.singlerr.sg.core.GameCore;
 import io.github.singlerr.sg.core.setup.GameSettings;
 import io.github.singlerr.sg.core.utils.PlayerUtils;
@@ -19,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.Style;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import net.minecraft.Optionull;
 import net.minecraft.network.chat.RemoteChatSession;
 import net.minecraft.network.protocol.game.ClientboundBundlePacket;
@@ -116,7 +120,10 @@ public class GameContext {
 
     p.setRole(GameRole.ADMIN);
 
-    p.setAdminDisplayName(Component.text("?"));
+    p.setAdminDisplayName(player.name());
+    p.setUserDisplayName(Component.text("?"));
+    syncName(p, getPlayers());
+
     player.setGameMode(GameMode.CREATIVE);
     player.setOp(true);
 
@@ -125,6 +132,7 @@ public class GameContext {
     Component msg = Component.text("TROY ").style(Style.style(NamedTextColor.YELLOW)).append(
         p.getAdminDisplayName().asComponent().style(Style.style(NamedTextColor.AQUA))
             .append(Component.text(" 탈락").style(Style.style(NamedTextColor.YELLOW))));
+
     for (GamePlayer admin : getPlayers(GameRole.TROY)) {
       admin.sendMessage(msg);
     }
@@ -254,10 +262,37 @@ public class GameContext {
     syncName(player, getPlayers().stream().filter(filter).toList());
   }
 
+  public void syncVoicechatName(GamePlayer player) {
+    if (Voicechat.SERVER == null) {
+      return;
+    }
+    if (Voicechat.SERVER.getServer() == null) {
+      return;
+    }
+
+    Server voiceServer = Voicechat.SERVER.getServer();
+    PlayerState state =
+        voiceServer.getPlayerStateManager().getState(player.getPlayer().getUniqueId());
+    if (state == null) {
+      return;
+    }
+
+    String name = PlainTextComponentSerializer.plainText().serialize(player.getUserDisplayName());
+    // sync only if state is not synced
+    if (state.getName().equalsIgnoreCase(name)) {
+      return;
+    }
+
+    state.setName(PlainTextComponentSerializer.plainText().serialize(player.getUserDisplayName()));
+    voiceServer.getPlayerStateManager().broadcastState(state);
+  }
+
   public void syncName(GamePlayer player, Collection<GamePlayer> targets) {
     if (!player.available()) {
       return;
     }
+
+    syncVoicechatName(player);
 
     ServerPlayer handle = ((CraftPlayer) player.getPlayer()).getHandle();
     for (GamePlayer target : targets) {
