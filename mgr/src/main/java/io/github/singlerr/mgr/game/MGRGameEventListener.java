@@ -85,6 +85,7 @@ public final class MGRGameEventListener implements GameEventListener {
             }
             joiningTimeIndicator.addPlayer(player.getPlayer());
           }
+          context.executeForSpectators(joiningTimeIndicator::addPlayer);
         }
         int secs = (int) (timeRemaining / 1000L);
         int minute = secs / 60;

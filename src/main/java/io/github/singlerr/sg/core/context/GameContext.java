@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -189,6 +190,16 @@ public class GameContext {
       if (p != null) {
         p.playSound(p, sound, 1.0f, 1.0f);
       }
+    }
+  }
+
+  public void executeForSpectators(Consumer<Player> executor) {
+    for (UUID spectatorId : GameCore.getInstance().getSpectators()) {
+      Player player = Bukkit.getPlayer(spectatorId);
+      if (player == null) {
+        continue;
+      }
+      executor.accept(player);
     }
   }
 

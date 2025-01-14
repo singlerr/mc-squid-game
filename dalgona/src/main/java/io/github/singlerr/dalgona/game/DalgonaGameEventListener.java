@@ -140,6 +140,8 @@ public final class DalgonaGameEventListener implements GameEventListener {
             }
           }
 
+          context.executeForSpectators(timeIndicator::addPlayer);
+
         }
       } else if (args[0].equalsIgnoreCase("pause")) {
         if (context.getGameStatus() == DalgonaGameStatus.PROGRESS) {

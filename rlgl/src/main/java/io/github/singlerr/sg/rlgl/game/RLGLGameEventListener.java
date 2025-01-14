@@ -108,6 +108,7 @@ public class RLGLGameEventListener implements GameEventListener {
     timeIndicator = Bukkit.createBossBar("", BarColor.RED, BarStyle.SOLID);
     ctx.getPlayers().stream().filter(GamePlayer::available).map(GamePlayer::getPlayer)
         .forEach(p -> timeIndicator.addPlayer(p));
+    ctx.executeForSpectators(timeIndicator::addPlayer);
   }
 
   @Override
