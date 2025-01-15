@@ -135,7 +135,7 @@ public class GameContext {
         p.getAdminDisplayName().asComponent().style(Style.style(NamedTextColor.AQUA))
             .append(Component.text(" 탈락").style(Style.style(NamedTextColor.YELLOW))));
 
-    for (GamePlayer admin : getPlayers(GameRole.TROY)) {
+    for (GamePlayer admin : getPlayers(GameRole.ADMIN)) {
       admin.sendMessage(msg);
     }
 

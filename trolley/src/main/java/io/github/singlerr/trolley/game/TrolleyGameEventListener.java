@@ -38,6 +38,8 @@ public final class TrolleyGameEventListener implements GameEventListener {
             NamedTextColor.RED))));
       }
     }
+    TrolleyGameContext ctx = (TrolleyGameContext) context;
+    ctx.removePlayerStatus(player.getId());
     context.tryBanPlayer(player);
   }
 

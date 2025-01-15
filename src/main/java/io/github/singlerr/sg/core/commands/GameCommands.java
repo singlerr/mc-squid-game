@@ -196,6 +196,10 @@ public final class GameCommands implements CommandExecutor, TabCompleter {
         successCallback(sender, "닉네임 재동기화 완료");
       });
     } else if (subCmd.equalsIgnoreCase("killn")) {
+      if (!sender.isOp()) {
+        errorCallback(sender, "권한이 없습니다.");
+        return false;
+      }
       if (args.length <= 1) {
         errorCallback(sender, "플레이어 번호를 입력하세요.");
         return false;
@@ -242,6 +246,10 @@ public final class GameCommands implements CommandExecutor, TabCompleter {
       }
 
     } else if (subCmd.equalsIgnoreCase("kills")) {
+      if (!sender.isOp()) {
+        errorCallback(sender, "권한이 없습니다.");
+        return false;
+      }
       if (args.length <= 1) {
         errorCallback(sender, "플레이어 번호를 입력하세요.");
         return false;
@@ -281,6 +289,10 @@ public final class GameCommands implements CommandExecutor, TabCompleter {
       }
 
     } else if (args[0].equalsIgnoreCase("setspawn")) {
+      if (!sender.isOp()) {
+        errorCallback(sender, "권한이 없습니다.");
+        return false;
+      }
       if (!(sender instanceof Player player)) {
         errorCallback(sender, "플레이어만 사용가능한 명령어입니다.");
         return false;
@@ -289,6 +301,10 @@ public final class GameCommands implements CommandExecutor, TabCompleter {
       GameCore.getInstance().setSpawnLocation(player.getLocation());
       successCallback(sender, "현재 위치를 스폰 지점으로 설정하였습니다.");
     } else if (args[0].equalsIgnoreCase("addskin")) {
+      if (!sender.isOp()) {
+        errorCallback(sender, "권한이 없습니다.");
+        return false;
+      }
       if (args.length > 3) {
         String idInput = args[1];
         String url = args[2];
@@ -318,8 +334,13 @@ public final class GameCommands implements CommandExecutor, TabCompleter {
         errorCallback(sender, "/sg addskin [uuid] [url] [slim(true/false)]");
       }
     } else if (args[0].equalsIgnoreCase("removeskin")) {
+      if (!sender.isOp()) {
+        errorCallback(sender, "권한이 없습니다.");
+        return false;
+      }
       if (args.length > 1) {
         String idInput = args[1];
+        idInput = idInput.replaceAll("(.{8})(.{4})(.{4})(.{4})(.+)", "$1-$2-$3-$4-$5");
         if (GameCore.getInstance().getSkin(idInput) == null) {
           errorCallback(sender, "{}에 해당하는 스킨이 없습니다.", idInput);
           return false;
@@ -329,16 +350,35 @@ public final class GameCommands implements CommandExecutor, TabCompleter {
         successCallback(sender, "{}의 스킨을 제거하였습니다.", idInput);
       }
     } else if (args[0].equalsIgnoreCase("saveskins")) {
+      if (!sender.isOp()) {
+        errorCallback(sender, "권한이 없습니다.");
+        return false;
+      }
       GameCore.getInstance().saveSkins();
       successCallback(sender, "모든 스킨 저장 완료");
     } else if (args[0].equalsIgnoreCase("listskins")) {
-      for (Map.Entry<String, Object> entry : GameCore.getInstance().skinList()) {
+      if (!sender.isOp()) {
+        errorCallback(sender, "권한이 없습니다.");
+        return false;
+      }
+      var list = GameCore.getInstance().skinList();
+      for (Map.Entry<String, Object> entry : list) {
         infoCallback(sender, "{} -> {}", entry.getKey(), entry.getValue());
       }
+      infoCallback(sender, "총 스킨 갯수: {}개", list.size());
+
     } else if (args[0].equalsIgnoreCase("reloadskins")) {
+      if (!sender.isOp()) {
+        errorCallback(sender, "권한이 없습니다.");
+        return false;
+      }
       GameCore.getInstance().reloadSkins();
       successCallback(sender, "모든 스킨 리로드 완료");
     } else if (args[0].equalsIgnoreCase("spectate")) {
+      if (!sender.isOp()) {
+        errorCallback(sender, "권한이 없습니다.");
+        return false;
+      }
       if (!(sender instanceof Player player)) {
         errorCallback(sender, "플레이어만 사용 가능한 명령어입니다.");
         return false;

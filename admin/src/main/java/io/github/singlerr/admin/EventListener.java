@@ -75,6 +75,15 @@ public final class EventListener extends InteractableListener {
       return;
     }
 
+    GamePlayer killer = info.context().getPlayer(event.getPlayer().getUniqueId());
+    if (killer == null) {
+      return;
+    }
+
+    if (killer.getRole().getLevel() < GameRole.ADMIN.getLevel()) {
+      return;
+    }
+
     event.getPlayer().getWorld().playSound(event.getPlayer().getLocation(), SOUND_MP5, 1f, 1f);
     player.setVelocity(event.getPlayer().getLocation().getDirection().multiply(0.3));
 
