@@ -101,8 +101,6 @@ public class DalgonaGameContext extends GameContext {
               .style(
                   Style.style(NamedTextColor.RED)), GameRole.ADMIN);
     }
-
-
   }
 
   public PlayerDalgonaStatus getPlayerStatus(UUID id) {

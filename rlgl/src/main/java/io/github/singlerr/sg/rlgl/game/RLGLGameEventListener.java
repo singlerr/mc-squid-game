@@ -4,8 +4,6 @@ import io.github.singlerr.sg.core.context.GameContext;
 import io.github.singlerr.sg.core.context.GamePlayer;
 import io.github.singlerr.sg.core.context.GameRole;
 import io.github.singlerr.sg.core.events.GameEventListener;
-import io.github.singlerr.sg.core.network.NetworkRegistry;
-import io.github.singlerr.sg.core.network.packets.PacketInitModel;
 import io.github.singlerr.sg.core.utils.PlayerUtils;
 import java.util.Collection;
 import lombok.extern.slf4j.Slf4j;
@@ -35,18 +33,6 @@ public class RLGLGameEventListener implements GameEventListener {
     }
     if (timeIndicator != null) {
       timeIndicator.addPlayer(player.getPlayer());
-    }
-
-    RLGLGameContext ctx = (RLGLGameContext) context;
-    RLGLGameSettings settings = ctx.getGameSettings();
-    if (ctx.getYoungHee() != null) {
-      PacketInitModel pkt =
-          new PacketInitModel(settings.getYoungHee().getId(), ctx.getYoungHee().getEntityId(),
-              settings.getFrontState(),
-              settings.getModelLocation());
-      NetworkRegistry network =
-          Bukkit.getServicesManager().getRegistration(NetworkRegistry.class).getProvider();
-      network.getChannel().sendTo(player.getPlayer(), pkt);
     }
 
     player.getPlayer().setCustomNameVisible(true);

@@ -29,6 +29,7 @@ public final class IntermediaryGameEventListener implements GameEventListener {
       if (isUser) {
         PlayerUtils.changeSkin(player.getPlayer(), GameRole.USER, player.getGender());
       }
+
       Bukkit.getScheduler().scheduleSyncDelayedTask(Intermediary.getInstance(), () -> {
         player.available();
 
@@ -41,6 +42,7 @@ public final class IntermediaryGameEventListener implements GameEventListener {
         } else {
           player.setUserDisplayName(Component.text("?"));
         }
+
         context.syncName(player, context.getPlayers());
         context.syncName(context.getPlayers(), player);
       }, 20L);

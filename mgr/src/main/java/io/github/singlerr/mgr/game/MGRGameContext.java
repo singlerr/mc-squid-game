@@ -33,8 +33,6 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.JoinConfiguration;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.Style;
-import net.kyori.adventure.title.Title;
-import net.kyori.adventure.util.Ticks;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -278,17 +276,6 @@ public final class MGRGameContext extends GameContext {
     setDoorOpen(true);
     setPumpkinHead(true);
     lockPlayer(false);
-
-    Title notify = Title.title(Component.text(playerCount).style(Style.style(NamedTextColor.RED))
-            .append(Component.text("명")), Component.empty(),
-        Title.Times.times(Ticks.duration(0), Ticks.duration(40), Ticks.duration(0)));
-    for (GamePlayer player : getPlayers()) {
-      if (!player.available()) {
-        continue;
-      }
-
-      player.getPlayer().showTitle(notify);
-    }
   }
 
   public void setPumpkinHead(boolean flag) {

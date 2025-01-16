@@ -239,10 +239,10 @@ public final class GameCommands implements CommandExecutor, TabCompleter {
             .playSound(player.getPlayer().getLocation(), SOUND_MP5, 1f, 1f);
         player.getPlayer().setHealth(0);
 
-        successCallback(sender, "{} 플레이어를 탈락시켰습니다. 동시에 사망처리하였습니다.");
+        successCallback(sender, "{} 플레이어를 탈락시켰습니다. 동시에 사망처리하였습니다.", number);
       } else {
         ctx.kickPlayer(player);
-        infoCallback(sender, "{} 플레이어는 온라인이 아니므로 탈락 처리만 하였습니다.");
+        infoCallback(sender, "{} 플레이어는 온라인이 아니므로 탈락 처리만 하였습니다.", number);
       }
 
     } else if (subCmd.equalsIgnoreCase("kills")) {
@@ -282,10 +282,10 @@ public final class GameCommands implements CommandExecutor, TabCompleter {
         player.getPlayer().getWorld()
             .playSound(player.getPlayer().getLocation(), SOUND_MP5, 1f, 1f);
         player.getPlayer().setHealth(0);
-        successCallback(sender, "{} 플레이어를 탈락시켰습니다. 동시에 사망처리하였습니다.");
+        successCallback(sender, "{} 플레이어를 탈락시켰습니다. 동시에 사망처리하였습니다.", name);
       } else {
         ctx.kickPlayer(player);
-        infoCallback(sender, "{} 플레이어는 온라인이 아니므로 탈락 처리만 하였습니다.");
+        infoCallback(sender, "{} 플레이어는 온라인이 아니므로 탈락 처리만 하였습니다.", name);
       }
 
     } else if (args[0].equalsIgnoreCase("setspawn")) {
@@ -390,6 +390,22 @@ public final class GameCommands implements CommandExecutor, TabCompleter {
       } else {
         GameCore.getInstance().getSpectators().add(player.getUniqueId());
         infoCallback(sender, "관전 활성화");
+      }
+    } else if (args[0].equalsIgnoreCase("resetnum")) {
+      if (!sender.isOp()) {
+        errorCallback(sender, "권한이 없습니다.");
+        return false;
+      }
+      if (args.length > 1) {
+        String input = args[1];
+        try {
+          int n = Integer.parseInt(input);
+          GameContext.getIdCount().set(n);
+          successCallback(sender, "{}로 플레이어 숫자 카운트 변경", n);
+        } catch (NumberFormatException ex) {
+          errorCallback(sender, "정수를 입력하세요.");
+          return false;
+        }
       }
     }
     return true;
@@ -533,7 +549,7 @@ public final class GameCommands implements CommandExecutor, TabCompleter {
       return;
     }
 
-    gameInfo.context().joinPlayer(new GamePlayer(player, role, gender));
+    boolean result = gameInfo.context().joinPlayer(new GamePlayer(player, role, gender));
     if (!silent) {
       infoCallback(player, "게임에 참가했습니다!");
     }

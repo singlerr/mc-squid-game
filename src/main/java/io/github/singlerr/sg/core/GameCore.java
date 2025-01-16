@@ -1,6 +1,5 @@
 package io.github.singlerr.sg.core;
 
-import de.maxhenkel.voicechat.api.BukkitVoicechatService;
 import fr.skytasul.glowingentities.GlowingEntities;
 import io.github.singlerr.sg.core.commands.GameCommands;
 import io.github.singlerr.sg.core.network.NetworkRegistry;
@@ -15,7 +14,6 @@ import io.github.singlerr.sg.core.registry.Registry;
 import io.github.singlerr.sg.core.registry.impl.DefaultGameRegistry;
 import io.github.singlerr.sg.core.registry.impl.RegistryFactory;
 import io.github.singlerr.sg.core.setup.GameSettings;
-import io.github.singlerr.sg.core.thirdparty.GameVoicechatPlugin;
 import io.github.singlerr.sg.core.utils.PlayerUtils;
 import java.io.File;
 import java.io.IOException;
@@ -231,11 +229,6 @@ public final class GameCore extends JavaPlugin {
   }
 
   private void initVoicechatCompat() {
-    BukkitVoicechatService service =
-        getServer().getServicesManager().load(BukkitVoicechatService.class);
-    if (service != null) {
-      service.registerPlugin(new GameVoicechatPlugin(instance));
-    }
   }
 
   private void setup(GameRegistry registry) {

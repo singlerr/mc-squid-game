@@ -34,8 +34,6 @@ dependencies {
     paperweight.paperDevBundle(paper_version)
     compileOnly "net.skinsrestorer:skinsrestorer-api:${project.skin_restorer_version}"
     embed "fr.skytasul:glowingentities:${project.glowing_entities_version}"
-
-    compileOnly fileTree(dir: 'libs', includes: ['*.jar'])
 }
 
 jar {
