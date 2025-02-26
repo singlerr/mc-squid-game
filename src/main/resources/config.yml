@@ -1,13 +1,5 @@
-admin_skin_url: https://i.imgur.com/NzJGKH0.png
+admin_skin_url: FRONT_URL
 player_skin_url_woman:
-  - https://i.imgur.com/Ah1JAL2.png
-  - https://i.imgur.com/0GeJevS.png
-  - https://i.imgur.com/4tFvjFp.png
+  - PLAYER_URL
 player_skin_url_man:
-  - https://i.imgur.com/UQj2B4U.png
-  - https://i.imgur.com/57VUroa.png
-  - https://i.imgur.com/jphUelB.png
-  - https://i.imgur.com/EAqO3WC.png
-  - https://i.imgur.com/vYXu9lF.png
-  - https://i.imgur.com/vYXu9lF.png
-  - https://i.imgur.com/2YbQPIl.png
+  - PLAYER_URL
