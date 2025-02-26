@@ -5,7 +5,7 @@ A comprehensive game manager and game set comprised of five games(달고나 게�
 Before get started
 ----
 
-All of resources (sounds, images) are public. You should create your own! 
+All of resources (sounds, images, models .etc) are not public. You should create your own! 
 
 Note
 ----
